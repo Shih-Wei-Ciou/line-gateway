@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ── Project-specific additions ─────────────────────────────
+# IDE settings (per-developer, not shared)
+.idea/
+.vscode/
+
+# External projects vendored locally (not part of this repo)
+tep-master/
+
+# Project working notes — pending decision
+# 文件/
