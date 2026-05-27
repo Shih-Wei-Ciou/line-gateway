@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Log 模板使用說明</title>
+<style>
+  :root {
+    --bg: #1a1612; --bg-elevated: #221d18; --bg-card: #2a2420;
+    --border: #3a322c; --text: #e8e0d4; --text-muted: #9a9088;
+    --text-dim: #6a6058; --accent: #c9a961; --green: #8fbc6c;
+    --amber: #d4a04c; --red: #c97a6b;
+    --mono: "JetBrains Mono","Consolas",monospace;
+    --serif: "Noto Serif TC","PingFang TC",serif;
+    --sans: "Noto Sans TC","Microsoft JhengHei",sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--sans);
+    line-height: 1.7; padding: 48px 24px; min-height: 100vh;
+  }
+  .container { max-width: 800px; margin: 0 auto; }
+  h1 { font-family: var(--serif); font-size: 42px; margin-bottom: 8px; font-weight: 500; }
+  .sub { font-family: var(--serif); font-style: italic; color: var(--text-muted); margin-bottom: 48px; }
+  h2 {
+    font-family: var(--serif); font-size: 24px; font-weight: 500;
+    margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  h3 { font-family: var(--serif); font-size: 18px; margin: 24px 0 12px; color: var(--accent); }
+  p { color: var(--text-muted); margin-bottom: 12px; }
+  code {
+    font-family: var(--mono); font-size: 0.92em;
+    background: var(--bg-elevated); padding: 2px 6px;
+    border-radius: 2px; color: var(--accent);
+  }
+  pre {
+    background: #0f0c0a; border: 1px solid var(--border);
+    border-radius: 4px; padding: 16px 20px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.6;
+    color: var(--text); margin: 12px 0;
+  }
+  pre code { background: none; padding: 0; color: var(--text); }
+  ul { color: var(--text-muted); padding-left: 24px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  .callout {
+    background: var(--bg-card); border-left: 3px solid var(--accent);
+    padding: 16px 20px; margin: 16px 0;
+  }
+  .callout.warn { border-left-color: var(--amber); }
+  .callout-title {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 6px;
+  }
+  .callout.warn .callout-title { color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Task Log 模板</h1>
+<p class="sub">每次 Claude Code 做完一個任務,生成一份 HTML log。</p>
+
+<h2>檔案結構</h2>
+<pre><code>line-gateway/
+├── docs/
+│   └── templates/
+│       ├── task_log.html.template    ← 單篇 log 模板
+│       ├── index.html.template       ← 索引頁模板
+│       └── README.html               ← 這份說明
+└── logs/
+    ├── index.html                    ← 索引頁(列出所有 log)
+    ├── 2026-05-26_setup_rich_menu.html
+    ├── 2026-05-27_xxx.html
+    └── ...</code></pre>
+
+<h2>命名規則</h2>
+<pre><code>logs/YYYY-MM-DD_task_slug.html
+
+範例:
+  2026-05-26_setup_rich_menu.html
+  2026-05-27_deep_link_spec.html
+  2026-05-28_push_service.html
+
+task_slug 規則:
+  - 全小寫
+  - 用底線分隔
+  - 不超過 4 個詞
+  - 動詞開頭(setup_, fix_, refactor_, add_, remove_)</code></pre>
+
+<h2>給 Claude Code 的標準收尾指令</h2>
+
+<p>每次任務結束時,在指令最後加這段:</p>
+
+<pre><code>=== 收尾(log 生成)===
+
+請依照 docs/templates/task_log.html.template 生成這次任務的 log,
+存到 logs/{今天日期}_{task_slug}.html。
+
+填寫變數:
+  {{STAGE_TAG}}     例如 "Pre-Stage 4 · LINE" 或 "Stage 5 · Push"
+  {{TASK_TITLE}}    任務標題(中文)
+  {{DATE}}          YYYY-MM-DD HH:MM
+  {{DURATION}}      實際花的時間
+  {{TASK_GOAL}}     2-3 句話說明這次做什麼、為什麼
+  {{FILE_CHANGES}}  用 <li> 列出每個檔案,用 file-badge.new / modified / deleted 標示
+  {{DECISIONS}}     至少 1-2 張 card,寫關鍵決策或 caveat
+  {{TODO_LIST}}     用 <li> 列出待辦,完成的加 class="done"
+  {{VERIFY_LIST}}   驗收 checklist
+  {{NEXT_STEP}}     下一個任務是什麼
+
+同時更新 logs/index.html:
+  1. 在 <div class="timeline"> 最上方加一個新的 <article class="log-entry">
+  2. 更新 stats 區的 Total Logs 數字和 Last Update 日期
+  3. data-tags 用空格分隔,對應 filter chip 的 data-filter
+     (例如 "stage-pre4 line" 或 "stage-4 webapp")
+
+兩個檔案的 CSS 已經內嵌,不要修改 style 區塊,只填變數即可。</code></pre>
+
+<div class="callout">
+  <div class="callout-title">Tip</div>
+  上面這段可以存成一個 snippet,每次叫 Claude Code 時複製貼上。
+  或者寫進專案的 <code>CLAUDE.md</code>(Claude Code 的專案規則檔)
+  讓它每次自動執行。
+</div>
+
+<h2>tag 命名建議</h2>
+
+<p>filter 用的 tag 不要太多,維持在 6-8 個內。建議:</p>
+
+<ul>
+  <li><code>stage-pre4</code> / <code>stage-4</code> / <code>stage-5</code> ... <em>(階段)</em></li>
+  <li><code>line</code> <em>(LINE Gateway 相關)</em></li>
+  <li><code>webapp</code> <em>(Web App 對接相關)</em></li>
+  <li><code>tep</code> <em>(TEP 對接相關)</em></li>
+  <li><code>fix</code> <em>(修 bug)</em></li>
+  <li><code>refactor</code> <em>(重構)</em></li>
+  <li><code>infra</code> <em>(部署、CI、環境)</em></li>
+</ul>
+
+<h2>怎麼看 log</h2>
+
+<p>方法 1:雙擊 <code>logs/index.html</code> 用瀏覽器打開</p>
+
+<p>方法 2:VSCode 用 Live Server 擴充套件開啟</p>
+
+<p>方法 3:本機跑簡單 server:</p>
+
+<pre><code>cd logs
+python -m http.server 8000
+# 瀏覽器開 http://localhost:8000</code></pre>
+
+<h2>進階(之後可加)</h2>
+
+<ul>
+  <li>自動生成 index.html 的 Python 腳本(掃 logs/ 資料夾、按日期排序)</li>
+  <li>把所有 log 打包成單一搜尋頁(Lunr.js 全文搜尋)</li>
+  <li>Git pre-commit hook 強制每次 commit 都要有對應 log</li>
+</ul>
+
+<div class="callout warn">
+  <div class="callout-title">注意</div>
+  這套 log 是給<strong>未來的你</strong>看的,不是給審查用的。
+  寫得太詳細反而沒人看。重點是
+  <strong>「3 個月後的你打開能 5 秒內想起做了什麼、為什麼」</strong>。
+</div>
+
+</div>
+</body>
+</html>
