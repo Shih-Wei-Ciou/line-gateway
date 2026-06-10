@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>報告設計範本 · Design Template</title>
+
+<!--
+  ============================================================================
+  報告設計範本 (Report Design Template)
+  ----------------------------------------------------------------------------
+  這是一份「可重複使用」的範本。下次要做任何報告 / 紀錄:
+    1. 複製整份檔案，改 <title> 和封面文字。
+    2. 想換配色 → 只改最上面 :root 裡的 CSS 變數，整頁會跟著變。
+    3. 每個元件下方都有註解教你怎麼複製貼上。
+    4. 左側目錄會自動依 <section> 的 data-title / 內部 h3 產生，並支援:
+       點擊跳轉、捲動高亮(scroll-spy)、子項可折疊。
+    5. 圖片用 <img class="zoomable"> 即可點擊放大(已內建 lightbox)。
+  設計語言: 暖色淺底 + 三層表面層次 + 單一強調色 + 襯線標題。
+  ============================================================================
+-->
+
+<style>
+/* ===========================================================================
+   1. 設計變數 (Design Tokens) —— 想改風格只動這一塊
+   =========================================================================== */
+:root{
+  /* --- 三層表面 (surface levels)，層與層之間刻意拉開明度差，不要糊在一起 --- */
+  --l0:#f3eee2;   /* L0 頁面最底(暖米白) */
+  --l1:#fffdf8;   /* L1 章節容器(浮在頁面上的卡片) */
+  --l2:#f8f2e6;   /* L2 元件卡片(表格/KPI/圖表，再亮一階) */
+
+  /* --- 文字 --- */
+  --ink:#2a2620;       /* 主文字(暖近黑) */
+  --ink-soft:#6b6457;  /* 次要文字 */
+  --ink-faint:#9a9387; /* 標籤 / caption */
+
+  /* --- 線條 --- */
+  --line:#e3dcc9;       /* 一般邊框 */
+  --line-strong:#cdc3ac;/* 強調邊框 / 表格上下粗線 */
+
+  /* --- 強調色: 整頁只用「一個」主強調色，其餘交給語意色 --- */
+  --accent:#b3552b;       /* 陶土橙: 章節編號 / 連結 / 最佳 / 重點數字 */
+  --accent-soft:#e8d3c4;  /* 強調色的淡底 */
+
+  /* --- 語意色: 表達好/注意/壞，別拿來當裝飾 --- */
+  --good:#4d7a4d;
+  --warn:#a87422;
+  --bad:#a23a2a;
+
+  /* --- 字體 --- */
+  --serif:"Iowan Old Style","Apple Garamond",Cambria,"Noto Serif TC","Songti TC",serif;
+  --sans:-apple-system,"Segoe UI Variable","Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:"Cascadia Code","SF Mono",Consolas,"Roboto Mono",monospace;
+
+  /* --- 間距節奏: 全部以 8px 為基準 --- */
+  --sp-1:8px; --sp-2:16px; --sp-3:24px; --sp-4:32px; --sp-5:48px; --sp-6:72px;
+
+  --radius:10px;
+  --shadow:0 1px 2px rgba(60,50,30,.04), 0 6px 18px rgba(60,50,30,.06);
+  --nav-w:280px;
+}
+
+/* ===========================================================================
+   2. 基礎排版
+   =========================================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--l0); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums; font-family:var(--mono)}
+a{color:var(--accent); text-underline-offset:3px}
+
+/* ===========================================================================
+   3. 版面: 左側固定目錄 + 右側長文 (Notion 式)
+   =========================================================================== */
+.layout{display:flex; min-height:100vh}
+
+/* ---- 左側目錄 ---- */
+.nav{
+  width:var(--nav-w); flex:0 0 var(--nav-w);
+  position:sticky; top:0; align-self:flex-start; height:100vh;
+  overflow-y:auto; padding:var(--sp-4) var(--sp-2) var(--sp-4) var(--sp-3);
+  background:var(--l0); border-right:1px solid var(--line);
+}
+.nav-brand{
+  font-family:var(--serif); font-size:13px; letter-spacing:.04em;
+  color:var(--ink-soft); margin-bottom:var(--sp-1);
+}
+.nav-title{
+  font-family:var(--serif); font-size:21px; line-height:1.25; font-weight:600;
+  margin-bottom:var(--sp-4);
+}
+.nav-title em{color:var(--accent); font-style:italic}
+
+.toc{list-style:none; margin:0; padding:0; counter-reset:chap}
+.toc-item > .toc-link{
+  display:flex; align-items:center; gap:8px;
+  padding:7px 10px; border-radius:7px; cursor:pointer;
+  color:var(--ink); text-decoration:none; font-size:14.5px;
+  transition:background .15s;
+}
+.toc-link:hover{background:var(--accent-soft)}
+.toc-link .rn{
+  counter-increment:chap; font-family:var(--mono); font-size:11px;
+  color:var(--ink-faint); min-width:22px;
+}
+.toc-link .rn::before{content:counter(chap,upper-roman) "."}
+.toc-link .label{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.toc-link .arrow{
+  color:var(--ink-faint); font-size:11px; transition:transform .2s;
+  width:12px; text-align:center;
+}
+.toc-item.open > .toc-link .arrow{transform:rotate(90deg)}
+.toc-item.active > .toc-link{
+  background:var(--accent-soft); font-weight:600;
+}
+.toc-item.active > .toc-link .rn{color:var(--accent)}
+
+/* ---- 子項 (可折疊) ---- */
+.toc-sub{
+  list-style:none; margin:2px 0 4px; padding:0 0 0 30px;
+  max-height:0; overflow:hidden; transition:max-height .25s ease;
+}
+.toc-item.open .toc-sub{max-height:500px}
+.toc-sub a{
+  display:block; padding:5px 10px; border-radius:6px;
+  color:var(--ink-soft); text-decoration:none; font-size:13px;
+  border-left:1px solid var(--line);
+}
+.toc-sub a:hover{background:var(--accent-soft); color:var(--ink)}
+.toc-sub a.active{color:var(--accent); border-left-color:var(--accent); font-weight:600}
+
+/* ---- 右側內容 ---- */
+.main{flex:1; min-width:0; padding:var(--sp-5) var(--sp-6); max-width:1080px}
+
+/* ---- 漢堡 (窄螢幕用) ---- */
+.menu-btn{
+  display:none; position:fixed; top:14px; left:14px; z-index:50;
+  width:42px; height:42px; border-radius:9px; border:1px solid var(--line);
+  background:var(--l1); color:var(--ink); font-size:18px; cursor:pointer;
+  box-shadow:var(--shadow);
+}
+
+/* ===========================================================================
+   4. 章節容器 (L1) —— 同一章從標題到表格都包在同一個 L1 裡
+   =========================================================================== */
+.section{
+  background:var(--l1); border:1px solid var(--line); border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:var(--sp-5) var(--sp-5);
+  margin-bottom:var(--sp-4); scroll-margin-top:24px;
+}
+.eyebrow{
+  font-family:var(--mono); font-size:11px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--accent); margin-bottom:var(--sp-1);
+}
+.section h2{
+  font-family:var(--serif); font-size:34px; line-height:1.15; font-weight:600;
+  margin:0 0 var(--sp-2); letter-spacing:-.01em;
+}
+.section h2 em{color:var(--accent); font-style:italic}
+.section h2 + .rule{
+  width:54px; height:3px; background:var(--accent); border:none;
+  margin:0 0 var(--sp-3);
+}
+.section h3{
+  font-family:var(--serif); font-size:20px; font-weight:600;
+  margin:var(--sp-4) 0 var(--sp-2); scroll-margin-top:24px;
+}
+.section h3::before{content:"§ "; color:var(--accent); font-weight:400}
+.section p{margin:0 0 var(--sp-2); max-width:72ch}
+.lead{color:var(--ink-soft); font-size:17px}
+
+/* ===========================================================================
+   5. 元件庫
+   =========================================================================== */
+
+/* ---- 5a. 引文 lede (斜體襯線 + 強調左線) ---- */
+.lede{
+  font-family:var(--serif); font-style:italic; font-size:19px; line-height:1.7;
+  color:var(--ink); border-left:3px solid var(--accent);
+  padding:var(--sp-1) 0 var(--sp-1) var(--sp-3); margin:var(--sp-3) 0;
+}
+
+/* ---- 5b. KPI 卡片 (每張獨立 L2，彼此用 gap 分開) ---- */
+.kpi-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr));
+  gap:var(--sp-2); margin:var(--sp-3) 0;
+}
+.kpi{
+  background:var(--l2); border:1px solid var(--line); border-radius:var(--radius);
+  padding:var(--sp-3);
+}
+.kpi.win{border-color:var(--accent); border-top:3px solid var(--accent)}
+.kpi .k-label{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink-faint); margin-bottom:var(--sp-1);
+}
+.kpi .k-num{
+  font-family:var(--serif); font-size:40px; line-height:1; font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.kpi.win .k-num{color:var(--accent)}
+.kpi .k-num .unit{font-size:17px; color:var(--ink-soft); margin-left:3px}
+.kpi .k-sub{font-size:13px; color:var(--ink-soft); margin-top:var(--sp-1)}
+.kpi .k-num.good{color:var(--good)} .kpi .k-num.bad{color:var(--bad)}
+
+/* ---- 5c. 結論 / Finding (細左線 + 淡底，三塊之間有間距) ---- */
+.finding{
+  background:var(--l2); border-left:3px solid var(--accent); border-radius:0 8px 8px 0;
+  padding:var(--sp-3) var(--sp-3); margin:var(--sp-2) 0;
+}
+.finding .f-tag{
+  font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--accent);
+  text-transform:uppercase; margin-bottom:6px;
+}
+.finding p{margin:0}
+.finding.good{border-left-color:var(--good)} .finding.good .f-tag{color:var(--good)}
+.finding.warn{border-left-color:var(--warn)} .finding.warn .f-tag{color:var(--warn)}
+.finding.bad{border-left-color:var(--bad)}   .finding.bad .f-tag{color:var(--bad)}
+
+/* ---- 5d. 科學期刊式表格 (上下粗線、無斑馬紋、數字 tabular) ---- */
+.table-card{
+  background:var(--l2); border:1px solid var(--line); border-radius:var(--radius);
+  padding:var(--sp-3); margin:var(--sp-3) 0; overflow-x:auto;
+}
+table.sci{width:100%; border-collapse:collapse; font-size:14px}
+table.sci thead th{
+  font-family:var(--sans); font-weight:600; font-size:12.5px; color:var(--ink-soft);
+  text-align:right; padding:8px 14px;
+  border-bottom:1px solid var(--line-strong);
+}
+table.sci thead th:first-child{text-align:left}
+table.sci tbody td{
+  padding:9px 14px; text-align:right; border-bottom:1px solid var(--line);
+  font-variant-numeric:tabular-nums; font-family:var(--mono); font-size:13.5px;
+}
+table.sci tbody td:first-child{
+  text-align:left; font-family:var(--sans); font-weight:600; font-size:14px;
+}
+table.sci tbody tr:last-child td{border-bottom:2px solid var(--line-strong)}
+table.sci .win{color:var(--accent); font-weight:700; text-decoration:underline;
+  text-decoration-color:var(--accent); text-underline-offset:4px}
+.pill{display:inline-block; padding:1px 9px; border-radius:11px; font-size:12px;
+  font-family:var(--sans); font-weight:600}
+.pill.good{background:#e3efe1; color:var(--good)}
+.pill.warn{background:#f3e8cf; color:var(--warn)}
+.pill.bad{background:#f3dcd8; color:var(--bad)}
+.caption{font-size:12.5px; color:var(--ink-faint); margin-top:var(--sp-1)}
+
+/* ---- 5e. 圖表卡片 (底色用 L2，跟頁面背景區隔) ---- */
+.chart-card{
+  background:var(--l2); border:1px solid var(--line); border-radius:var(--radius);
+  padding:var(--sp-3) var(--sp-3) var(--sp-2); margin:var(--sp-3) 0;
+}
+.chart-card .c-title{font-family:var(--serif); font-size:16px; font-weight:600; margin-bottom:var(--sp-2)}
+.chart-card svg{display:block; width:100%; height:auto}
+
+/* ---- 5f. 圖片 (可放大) ---- */
+.figure{margin:var(--sp-3) 0}
+.figure img{
+  width:100%; border-radius:var(--radius); border:1px solid var(--line);
+  display:block; background:#000;
+}
+.zoomable{cursor:zoom-in}
+
+/* ---- 5g. 提示框 callout ---- */
+.callout{
+  border-left:3px solid var(--ink-soft); background:var(--l2);
+  padding:var(--sp-2) var(--sp-3); border-radius:0 8px 8px 0; margin:var(--sp-2) 0;
+  font-size:14.5px; color:var(--ink-soft);
+}
+.callout strong{color:var(--ink)}
+
+/* ---- 5h. 色票 (本範本展示用) ---- */
+.swatches{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:var(--sp-2); margin:var(--sp-3) 0}
+.sw{border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--l1)}
+.sw .chip{height:56px}
+.sw .meta{padding:8px 12px; font-size:12px}
+.sw .meta b{display:block; font-family:var(--sans)}
+.sw .meta code{font-family:var(--mono); color:var(--ink-faint)}
+
+/* ===========================================================================
+   6. Lightbox (圖片放大: 滾輪縮放 / 拖曳 / 雙擊重置 / Esc 關)
+   =========================================================================== */
+.lightbox{position:fixed; inset:0; background:rgba(20,16,10,.94); display:none;
+  z-index:9999; cursor:grab; overflow:hidden; touch-action:none}
+.lightbox.open{display:block}
+.lightbox img{position:absolute; top:50%; left:50%; max-width:none;
+  user-select:none; -webkit-user-drag:none; will-change:transform}
+.lightbox .lb-x{position:fixed; top:16px; right:22px; font-size:32px; color:#f3eee2;
+  cursor:pointer; z-index:10000; line-height:1}
+.lightbox .lb-hint{position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+  color:#bdb4a3; font-size:13px; pointer-events:none}
+
+/* ===========================================================================
+   7. 響應式 + 列印
+   =========================================================================== */
+@media (max-width:900px){
+  .menu-btn{display:block}
+  .nav{position:fixed; left:0; top:0; z-index:40; transform:translateX(-100%);
+    transition:transform .25s; box-shadow:var(--shadow)}
+  .nav.open{transform:translateX(0)}
+  .main{padding:var(--sp-5) var(--sp-3); padding-top:64px}
+  .section{padding:var(--sp-4) var(--sp-3)}
+  .section h2{font-size:27px}
+}
+@media print{
+  .nav,.menu-btn,.lightbox{display:none}
+  body{background:#fff}
+  .section{box-shadow:none; border-color:#ccc; break-inside:avoid}
+  .main{max-width:none; padding:0}
+}
+</style>
+</head>
+
+<body>
+<button class="menu-btn" id="menuBtn" aria-label="目錄">☰</button>
+
+<div class="layout">
+
+  <!-- =====================================================================
+       左側目錄: 改報告時這裡通常不用手寫，下方 JS 會自動依 section 生成。
+       這裡先放靜態結構當示範 / fallback。
+       ===================================================================== -->
+  <nav class="nav" id="nav">
+    <div class="nav-brand">DESIGN SYSTEM · v1</div>
+    <div class="nav-title">報告設計<em>範本</em><br>與元件庫</div>
+    <ul class="toc" id="toc"><!-- JS 自動填入 --></ul>
+  </nav>
+
+  <!-- =====================================================================
+       右側內容: 每個 <section class="section"> 配一個 id 和 data-title。
+       id 用來跳轉，data-title 顯示在目錄。內部 <h3 id="..."> 會變成子項。
+       ===================================================================== -->
+  <main class="main" id="main">
+
+    <!-- ============ 封面 ============ -->
+    <section class="section" id="cover" data-title="封面">
+      <div class="eyebrow">A REUSABLE TEMPLATE · 2026</div>
+      <h2>一套你可以一直<em>沿用</em>的報告設計</h2>
+      <hr class="rule">
+      <p class="lead">這份檔案同時是「成品範例」和「零件箱」。下次要寫任何實驗紀錄、評估報告、專案總結，直接複製它、改字、換配色就好，不用每次重新想版面。</p>
+      <p class="lede">把力氣花在內容上，版面交給範本。一致的格式本身就是一種專業感。</p>
+    </section>
+
+    <!-- ============ 怎麼用 ============ -->
+    <section class="section" id="howto" data-title="怎麼使用">
+      <h2>怎麼用這份範本</h2>
+      <hr class="rule">
+      <p>就四步，照做不會錯:</p>
+      <div class="finding">
+        <div class="f-tag">Step 01 · 複製</div>
+        <p>整份 HTML 複製一份，改 <code>&lt;title&gt;</code> 和封面那段文字，就是你新報告的起點。</p>
+      </div>
+      <div class="finding">
+        <div class="f-tag">Step 02 · 換配色(可選)</div>
+        <p>只改最上面 <code>:root</code> 裡的變數。例如把 <code>--accent</code> 換成別的色，整頁的章節編號、連結、重點數字會一起跟著變，不用一個一個改。</p>
+      </div>
+      <div class="finding">
+        <div class="f-tag">Step 03 · 填內容</div>
+        <p>每加一個章節，就複製一個 <code>&lt;section&gt;</code> 區塊，給它 <code>id</code> 和 <code>data-title</code>。需要表格、KPI、圖表時，到下面元件庫挑一個複製過去改數字。</p>
+      </div>
+      <div class="finding good">
+        <div class="f-tag">Step 04 · 不用管目錄</div>
+        <p>左側目錄是程式自動生的 —— 它會掃所有 <code>section</code> 當主章節、掃裡面的 <code>&lt;h3&gt;</code> 當子項，還自動做「點擊跳轉、捲動高亮、子項折疊」。你只要專心寫內容。</p>
+      </div>
+      <div class="callout">
+        <strong>給 Claude Code 用:</strong> 也可以把這份檔案丟給 Claude Code 當設計基底，跟它說「照這份範本的設計風格與元件，幫我做 XX 報告」，它就會沿用同一套色彩、字體、版面。
+      </div>
+    </section>
+
+    <!-- ============ 色彩 ============ -->
+    <section class="section" id="color" data-title="色彩系統">
+      <h2>色彩系統</h2>
+      <hr class="rule">
+
+      <h3 id="color-surface">三層表面</h3>
+      <p>核心觀念: 頁面不是只有一個底色。由暗到亮分三層,層與層<strong>一定要有看得出來的明度差</strong>,東西才不會糊成一片。改報告時最常出包的就是這裡 —— 別讓兩層太接近。</p>
+      <div class="swatches">
+        <div class="sw"><div class="chip" style="background:var(--l0)"></div><div class="meta"><b>L0 頁面底</b><code>--l0</code></div></div>
+        <div class="sw"><div class="chip" style="background:var(--l1)"></div><div class="meta"><b>L1 章節容器</b><code>--l1</code></div></div>
+        <div class="sw"><div class="chip" style="background:var(--l2)"></div><div class="meta"><b>L2 元件卡片</b><code>--l2</code></div></div>
+      </div>
+
+      <h3 id="color-accent">強調色與語意色</h3>
+      <p>整頁只用<strong>一個</strong>主強調色(陶土橙),負責章節編號、連結、最佳值、重點數字。其餘狀態交給三個語意色:綠=好、黃=注意、紅=壞。別把語意色拿來當裝飾,不然又花了。</p>
+      <div class="swatches">
+        <div class="sw"><div class="chip" style="background:var(--accent)"></div><div class="meta"><b>強調 Accent</b><code>--accent</code></div></div>
+        <div class="sw"><div class="chip" style="background:var(--good)"></div><div class="meta"><b>好 Good</b><code>--good</code></div></div>
+        <div class="sw"><div class="chip" style="background:var(--warn)"></div><div class="meta"><b>注意 Warn</b><code>--warn</code></div></div>
+        <div class="sw"><div class="chip" style="background:var(--bad)"></div><div class="meta"><b>壞 Bad</b><code>--bad</code></div></div>
+      </div>
+    </section>
+
+    <!-- ============ 字體 ============ -->
+    <section class="section" id="type" data-title="字體系統">
+      <h2>字體系統</h2>
+      <hr class="rule">
+      <p>三種角色分工:<strong>襯線</strong>撐標題與引文的個性、<strong>無襯線</strong>負責好讀的內文、<strong>等寬</strong>專門對齊數字(<code>tabular-nums</code>,讓上下位數對齊)。</p>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>角色</th><th style="text-align:left">範例</th><th style="text-align:left">變數</th></tr></thead>
+          <tbody>
+            <tr><td>標題襯線</td><td style="text-align:left;font-family:var(--serif);font-size:22px">電梯人員覆蓋率</td><td style="text-align:left;font-family:var(--mono)">--serif</td></tr>
+            <tr><td>內文無襯線</td><td style="text-align:left;font-family:var(--sans)">這是一段內文,好讀優先。</td><td style="text-align:left;font-family:var(--mono)">--sans</td></tr>
+            <tr><td>數字等寬</td><td style="text-align:left" class="num">0.9565 · 74.7% · 8.51pp</td><td style="text-align:left;font-family:var(--mono)">--mono</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ KPI 卡片 ============ -->
+    <section class="section" id="kpi" data-title="KPI 卡片">
+      <h2>重點數字 (KPI)</h2>
+      <hr class="rule">
+      <p>放在摘要區,讓人三秒抓到重點。每張是獨立卡片、彼此留白,最佳的那張用 <code>.win</code> 點亮(橙色上邊框 + 橙色數字)。</p>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="k-label">Models Trained</div><div class="k-num num">4</div><div class="k-sub">seg / box 各兩種</div></div>
+        <div class="kpi win"><div class="k-label">Best mAP</div><div class="k-num num">0.9565</div><div class="k-sub">yolo26n-box · 最佳</div></div>
+        <div class="kpi"><div class="k-label">Coverage MAE</div><div class="k-num num good">0.35<span class="unit">pp</span></div><div class="k-sub">分割幾乎貼齊真值</div></div>
+        <div class="kpi"><div class="k-label">Box Overestimate</div><div class="k-num num bad">+65<span class="unit">%</span></div><div class="k-sub">框選法系統性灌水</div></div>
+      </div>
+      <!-- 複製一張 KPI: <div class="kpi"><div class="k-label">標籤</div><div class="k-num num">數字<span class="unit">單位</span></div><div class="k-sub">說明</div></div> -->
+    </section>
+
+    <!-- ============ 結論框 ============ -->
+    <section class="section" id="finding" data-title="結論框">
+      <h2>結論 / 重點提示</h2>
+      <hr class="rule">
+      <p>用顏色快速分辨語氣。語氣中性用預設,正面加 <code>.good</code>,要注意加 <code>.warn</code>,壞消息加 <code>.bad</code>。寫法盡量口語,像在跟人解釋。</p>
+      <div class="finding good"><div class="f-tag">結論 · 好消息</div><p>分割模型量出來的覆蓋率,比框選法準很多 —— 誤差只有 0.35~1.71 個百分點。</p></div>
+      <div class="finding warn"><div class="f-tag">結論 · 要注意</div><p>有一個模型在連續影格裡會「忽抓忽不抓」,跳變率 33%,不太適合直接拿去跑即時影片。</p></div>
+      <div class="finding bad"><div class="f-tag">結論 · 壞消息</div><p>100 張本來不該框的背景照,模型有 80 張還是手癢框了 —— 這就是為什麼要把它們加進訓練當反例。</p></div>
+    </section>
+
+    <!-- ============ 表格 ============ -->
+    <section class="section" id="table" data-title="表格">
+      <h2>科學期刊式表格</h2>
+      <hr class="rule">
+      <p>沒有斑馬紋、沒有滿格線 —— 只用上下兩條粗線 + 細列線,數字等寬右對齊,最佳值用橙色底線點出。包在 L2 卡片裡跟內文區隔。</p>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>模型</th><th>val mAP</th><th>test mAP</th><th>覆蓋率 MAE</th><th>判定</th></tr></thead>
+          <tbody>
+            <tr><td>yolo26n-seg</td><td>0.9420</td><td>0.9349</td><td>1.71pp</td><td><span class="pill warn">輕微</span></td></tr>
+            <tr><td>yolov8n-seg</td><td>0.9450</td><td>0.9283</td><td class="win">0.35pp</td><td><span class="pill good">最準</span></td></tr>
+            <tr><td>yolo26n-box</td><td class="win">0.9565</td><td>0.9295</td><td>5.52pp</td><td><span class="pill good">通過</span></td></tr>
+            <tr><td>yolov8n-box</td><td>0.9418</td><td>0.9377</td><td>5.57pp</td><td><span class="pill good">通過</span></td></tr>
+          </tbody>
+        </table>
+        <div class="caption">表 1 · 四模型在獨立標註的 50 張影像上的表現。橙色 = 該欄最佳。</div>
+      </div>
+    </section>
+
+    <!-- ============ 圖表 ============ -->
+    <section class="section" id="chart" data-title="圖表卡片">
+      <h2>圖表卡片</h2>
+      <hr class="rule">
+      <p>圖表的底色用 L2(比頁面亮一階),才不會跟背景糊在一起。下面是一張<strong>純內嵌 SVG</strong> 長條圖,不依賴任何外部程式庫,放進單檔離線報告剛好。需要的話也可以改放 matplotlib 出的 PNG。</p>
+      <div class="chart-card">
+        <div class="c-title">覆蓋率誤差 MAE — 越低越準 (pp)</div>
+        <svg viewBox="0 0 520 220" role="img" aria-label="覆蓋率 MAE 長條圖">
+          <!-- 格線 -->
+          <g stroke="#e3dcc9" stroke-width="1">
+            <line x1="60" y1="20" x2="60" y2="180"/>
+            <line x1="60" y1="180" x2="500" y2="180"/>
+          </g>
+          <g font-family="var(--mono)" font-size="10" fill="#9a9387" text-anchor="end">
+            <text x="54" y="184">0</text><text x="54" y="130">2</text>
+            <text x="54" y="80">4</text><text x="54" y="30">6</text>
+          </g>
+          <!-- 長條 (值: 1.71, 0.35, 5.52, 5.57 → 高度比例 *25) -->
+          <g>
+            <rect x="90"  y="137" width="70" height="43"  fill="#a87422"/>
+            <rect x="190" y="171" width="70" height="9"   fill="#4d7a4d"/>
+            <rect x="290" y="42"  width="70" height="138" fill="#b3552b"/>
+            <rect x="390" y="41"  width="70" height="139" fill="#b3552b"/>
+          </g>
+          <!-- 值標籤 -->
+          <g font-family="var(--mono)" font-size="11" fill="#2a2620" text-anchor="middle" font-weight="600">
+            <text x="125" y="130">1.71</text><text x="225" y="164">0.35</text>
+            <text x="325" y="35">5.52</text><text x="425" y="34">5.57</text>
+          </g>
+          <!-- X 標籤 -->
+          <g font-family="var(--sans)" font-size="10.5" fill="#6b6457" text-anchor="middle">
+            <text x="125" y="196">26n-seg</text><text x="225" y="196">v8n-seg</text>
+            <text x="325" y="196">26n-box</text><text x="425" y="196">v8n-box</text>
+          </g>
+        </svg>
+        <div class="caption">圖 1 · 分割(seg)兩根明顯比框選(box)矮 —— box 系統性高估覆蓋率。</div>
+      </div>
+    </section>
+
+    <!-- ============ 圖片 ============ -->
+    <section class="section" id="image" data-title="圖片放大">
+      <h2>圖片 (點擊放大)</h2>
+      <hr class="rule">
+      <p>任何 <code>&lt;img&gt;</code> 加上 <code>class="zoomable"</code> 就能點擊放大(滾輪縮放、拖曳平移、雙擊重置、Esc 關閉)。單檔離線版建議把圖轉成 base64 內嵌;架站版則直接用檔案路徑。下圖是內嵌 SVG 佔位示意。</p>
+      <div class="figure">
+        <img class="zoomable" alt="示意圖" src="data:image/svg+xml;utf8,
+          <svg xmlns='http://www.w3.org/2000/svg' width='800' height='420'>
+            <rect width='800' height='420' fill='%231a1a1a'/>
+            <rect x='250' y='110' width='150' height='220' fill='none' stroke='%23b3552b' stroke-width='3'/>
+            <text x='258' y='104' fill='%23b3552b' font-family='monospace' font-size='15'>cat_face 0.91</text>
+            <text x='400' y='400' fill='%239a9387' font-family='sans-serif' font-size='13' text-anchor='middle'>把這張換成你的偵測疊圖 / 照片 (點我放大)</text>
+          </svg>">
+      </div>
+    </section>
+
+    <!-- ============ 附錄 ============ -->
+    <section class="section" id="appendix" data-title="附錄速查">
+      <h2>附錄 · 速查</h2>
+      <hr class="rule">
+      <h3 id="ap-class">元件 class 一覽</h3>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th style="text-align:left">想要</th><th style="text-align:left">用這個</th></tr></thead>
+          <tbody>
+            <tr><td style="text-align:left">一個章節</td><td style="text-align:left;font-family:var(--mono)">&lt;section class="section" id data-title&gt;</td></tr>
+            <tr><td style="text-align:left">小標題(會變目錄子項)</td><td style="text-align:left;font-family:var(--mono)">&lt;h3 id&gt;</td></tr>
+            <tr><td style="text-align:left">引文 / 導讀</td><td style="text-align:left;font-family:var(--mono)">.lede</td></tr>
+            <tr><td style="text-align:left">重點數字</td><td style="text-align:left;font-family:var(--mono)">.kpi-grid &gt; .kpi(.win)</td></tr>
+            <tr><td style="text-align:left">結論框</td><td style="text-align:left;font-family:var(--mono)">.finding(.good/.warn/.bad)</td></tr>
+            <tr><td style="text-align:left">表格</td><td style="text-align:left;font-family:var(--mono)">.table-card &gt; table.sci</td></tr>
+            <tr><td style="text-align:left">圖表</td><td style="text-align:left;font-family:var(--mono)">.chart-card</td></tr>
+            <tr><td style="text-align:left">可放大圖片</td><td style="text-align:left;font-family:var(--mono)">img.zoomable</td></tr>
+            <tr><td style="text-align:left">提示框</td><td style="text-align:left;font-family:var(--mono)">.callout</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 id="ap-tip">兩個提醒</h3>
+      <div class="callout"><strong>層次:</strong> L0 / L1 / L2 三層底色一定要拉開差距,這是整套設計好不好看的關鍵。</div>
+      <div class="callout"><strong>口吻:</strong> 敘述用白話,像在跟人解釋,別寫得太生硬。數字精確,講法輕鬆。</div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Lightbox 容器 -->
+<div class="lightbox" id="lightbox">
+  <span class="lb-x" id="lbX">×</span>
+  <img id="lbImg" alt="放大檢視">
+  <span class="lb-hint">滾輪縮放 · 拖曳平移 · 雙擊重置 · Esc 關閉</span>
+</div>
+
+<script>
+/* ===========================================================================
+   8. 自動生成目錄 + 折疊 + scroll-spy
+   =========================================================================== */
+(function(){
+  const main = document.getElementById('main');
+  const toc  = document.getElementById('toc');
+  const sections = [...main.querySelectorAll('.section')];
+
+  // 建目錄: 每個 section 一個主項，內部 h3[id] 變子項
+  sections.forEach(sec=>{
+    const id = sec.id;
+    const title = sec.dataset.title || sec.querySelector('h2')?.textContent || id;
+    const subs = [...sec.querySelectorAll('h3[id]')];
+
+    const li = document.createElement('li');
+    li.className = 'toc-item'; li.dataset.target = id;
+
+    const link = document.createElement('a');
+    link.className = 'toc-link'; link.href = '#'+id;
+    link.innerHTML = `<span class="rn"></span><span class="label">${title}</span>`
+                   + (subs.length ? `<span class="arrow">▸</span>` : `<span class="arrow"></span>`);
+    li.appendChild(link);
+
+    if(subs.length){
+      const ul = document.createElement('ul'); ul.className = 'toc-sub';
+      subs.forEach(h=>{
+        const a = document.createElement('a');
+        a.href = '#'+h.id; a.dataset.target = h.id;
+        a.textContent = h.textContent.replace(/^§\s*/,'');
+        ul.appendChild(a);
+      });
+      li.appendChild(ul);
+    }
+    toc.appendChild(li);
+
+    // 點主項: 跳轉 + 展開/收合
+    link.addEventListener('click', e=>{
+      e.preventDefault();
+      document.getElementById(id).scrollIntoView({behavior:'smooth'});
+      if(subs.length) li.classList.toggle('open');
+      closeNavMobile();
+    });
+  });
+
+  // scroll-spy: 捲到哪個 section 就高亮哪個、自動展開
+  const items = [...toc.querySelectorAll('.toc-item')];
+  const byId = Object.fromEntries(items.map(i=>[i.dataset.target,i]));
+  const spy = new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        items.forEach(i=>i.classList.remove('active'));
+        const it = byId[en.target.id];
+        if(it){ it.classList.add('active'); it.classList.add('open'); }
+      }
+    });
+  }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+  sections.forEach(s=>spy.observe(s));
+
+  // 子項高亮
+  const subLinks = [...toc.querySelectorAll('.toc-sub a')];
+  const subTargets = subLinks.map(a=>document.getElementById(a.dataset.target)).filter(Boolean);
+  const subSpy = new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        subLinks.forEach(a=>a.classList.remove('active'));
+        const a = subLinks.find(x=>x.dataset.target===en.target.id);
+        if(a) a.classList.add('active');
+      }
+    });
+  }, {rootMargin:'-40% 0px -55% 0px', threshold:0});
+  subTargets.forEach(t=>subSpy.observe(t));
+
+  // 漢堡 (窄螢幕)
+  const nav = document.getElementById('nav');
+  const menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click', ()=>nav.classList.toggle('open'));
+  function closeNavMobile(){ if(window.innerWidth<=900) nav.classList.remove('open'); }
+
+  // 預設展開第一個有子項的章節
+  const firstWithSub = items.find(i=>i.querySelector('.toc-sub'));
+  if(firstWithSub) firstWithSub.classList.add('open');
+})();
+
+/* ===========================================================================
+   9. Lightbox 放大引擎
+   =========================================================================== */
+(function(){
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lbImg');
+  let s=1, tx=0, ty=0, drag=false, px=0, py=0;
+  const apply = ()=> img.style.transform =
+    `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${s})`;
+
+  document.querySelectorAll('.zoomable').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      s=1; tx=0; ty=0;
+      img.src = el.dataset.full || el.src;
+      apply(); lb.classList.add('open');
+    });
+  });
+  const close = ()=>{ lb.classList.remove('open'); img.src=''; };
+  document.getElementById('lbX').addEventListener('click', close);
+  lb.addEventListener('click', e=>{ if(e.target===lb) close(); });
+  lb.addEventListener('wheel', e=>{
+    e.preventDefault();
+    s = Math.min(8, Math.max(1, s*(1 - e.deltaY*0.0015)));
+    apply();
+  }, {passive:false});
+  img.addEventListener('pointerdown', e=>{
+    drag=true; px=e.clientX-tx; py=e.clientY-ty;
+    lb.style.cursor='grabbing'; img.setPointerCapture(e.pointerId);
+  });
+  img.addEventListener('pointermove', e=>{
+    if(!drag) return; tx=e.clientX-px; ty=e.clientY-py; apply();
+  });
+  img.addEventListener('pointerup', ()=>{ drag=false; lb.style.cursor='grab'; });
+  img.addEventListener('dblclick', ()=>{ s=1; tx=0; ty=0; apply(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+})();
+</script>
+</body>
+</html>

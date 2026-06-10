@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 登入 · 重新測試步驟卡</title>
+<style>
+/* ===========================================================================
+   設計變數 (Design Tokens) —— 沿用「報告設計範本」
+   =========================================================================== */
+:root{
+  --l0:#f3eee2; --l1:#fffdf8; --l2:#f8f2e6;
+  --ink:#2a2620; --ink-soft:#6b6457; --ink-faint:#9a9387;
+  --line:#e3dcc9; --line-strong:#cdc3ac;
+  --accent:#b3552b; --accent-soft:#e8d3c4;
+  --good:#4d7a4d; --warn:#a87422; --bad:#a23a2a;
+  --serif:"Iowan Old Style","Apple Garamond",Cambria,"Noto Serif TC","Songti TC",serif;
+  --sans:-apple-system,"Segoe UI Variable","Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:"Cascadia Code","SF Mono",Consolas,"Roboto Mono",monospace;
+  --sp-1:8px; --sp-2:16px; --sp-3:24px; --sp-4:32px; --sp-5:48px; --sp-6:72px;
+  --radius:10px;
+  --shadow:0 1px 2px rgba(60,50,30,.04), 0 6px 18px rgba(60,50,30,.06);
+  --nav-w:280px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0; background:var(--l0); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.75; -webkit-font-smoothing:antialiased;}
+.num{font-variant-numeric:tabular-nums; font-family:var(--mono)}
+a{color:var(--accent); text-underline-offset:3px}
+
+.layout{display:flex; min-height:100vh}
+.nav{width:var(--nav-w); flex:0 0 var(--nav-w); position:sticky; top:0; align-self:flex-start;
+  height:100vh; overflow-y:auto; padding:var(--sp-4) var(--sp-2) var(--sp-4) var(--sp-3);
+  background:var(--l0); border-right:1px solid var(--line);}
+.nav-brand{font-family:var(--serif); font-size:13px; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:var(--sp-1);}
+.nav-title{font-family:var(--serif); font-size:21px; line-height:1.25; font-weight:600; margin-bottom:var(--sp-4);}
+.nav-title em{color:var(--accent); font-style:italic}
+.toc{list-style:none; margin:0; padding:0; counter-reset:chap}
+.toc-item > .toc-link{display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:7px;
+  cursor:pointer; color:var(--ink); text-decoration:none; font-size:14.5px; transition:background .15s;}
+.toc-link:hover{background:var(--accent-soft)}
+.toc-link .rn{counter-increment:chap; font-family:var(--mono); font-size:11px; color:var(--ink-faint); min-width:22px;}
+.toc-link .rn::before{content:counter(chap,upper-roman) "."}
+.toc-link .label{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.toc-link .arrow{color:var(--ink-faint); font-size:11px; transition:transform .2s; width:12px; text-align:center;}
+.toc-item.open > .toc-link .arrow{transform:rotate(90deg)}
+.toc-item.active > .toc-link{background:var(--accent-soft); font-weight:600;}
+.toc-item.active > .toc-link .rn{color:var(--accent)}
+.toc-sub{list-style:none; margin:2px 0 4px; padding:0 0 0 30px; max-height:0; overflow:hidden; transition:max-height .25s ease;}
+.toc-item.open .toc-sub{max-height:500px}
+.toc-sub a{display:block; padding:5px 10px; border-radius:6px; color:var(--ink-soft);
+  text-decoration:none; font-size:13px; border-left:1px solid var(--line);}
+.toc-sub a:hover{background:var(--accent-soft); color:var(--ink)}
+.toc-sub a.active{color:var(--accent); border-left-color:var(--accent); font-weight:600}
+.main{flex:1; min-width:0; padding:var(--sp-5) var(--sp-6); max-width:1080px}
+.menu-btn{display:none; position:fixed; top:14px; left:14px; z-index:50; width:42px; height:42px;
+  border-radius:9px; border:1px solid var(--line); background:var(--l1); color:var(--ink);
+  font-size:18px; cursor:pointer; box-shadow:var(--shadow);}
+
+.section{background:var(--l1); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:var(--sp-5) var(--sp-5); margin-bottom:var(--sp-4); scroll-margin-top:24px;}
+.eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:var(--sp-1);}
+.section h2{font-family:var(--serif); font-size:34px; line-height:1.15; font-weight:600; margin:0 0 var(--sp-2); letter-spacing:-.01em;}
+.section h2 em{color:var(--accent); font-style:italic}
+.section h2 + .rule{width:54px; height:3px; background:var(--accent); border:none; margin:0 0 var(--sp-3);}
+.section h3{font-family:var(--serif); font-size:20px; font-weight:600; margin:var(--sp-4) 0 var(--sp-2); scroll-margin-top:24px;}
+.section h3::before{content:"§ "; color:var(--accent); font-weight:400}
+.section p{margin:0 0 var(--sp-2); max-width:72ch}
+.lead{color:var(--ink-soft); font-size:17px}
+
+.lede{font-family:var(--serif); font-style:italic; font-size:19px; line-height:1.7; color:var(--ink);
+  border-left:3px solid var(--accent); padding:var(--sp-1) 0 var(--sp-1) var(--sp-3); margin:var(--sp-3) 0;}
+
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:var(--sp-2); margin:var(--sp-3) 0;}
+.kpi{background:var(--l2); border:1px solid var(--line); border-radius:var(--radius); padding:var(--sp-3);}
+.kpi.win{border-color:var(--accent); border-top:3px solid var(--accent)}
+.kpi .k-label{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:var(--sp-1);}
+.kpi .k-num{font-family:var(--serif); font-size:40px; line-height:1; font-weight:600; font-variant-numeric:tabular-nums;}
+.kpi.win .k-num{color:var(--accent)}
+.kpi .k-num .unit{font-size:17px; color:var(--ink-soft); margin-left:3px}
+.kpi .k-sub{font-size:13px; color:var(--ink-soft); margin-top:var(--sp-1)}
+
+.finding{background:var(--l2); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; padding:var(--sp-3) var(--sp-3); margin:var(--sp-2) 0;}
+.finding .f-tag{font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--accent); text-transform:uppercase; margin-bottom:6px;}
+.finding p{margin:0 0 var(--sp-1)}
+.finding p:last-child{margin:0}
+.finding.good{border-left-color:var(--good)} .finding.good .f-tag{color:var(--good)}
+.finding.warn{border-left-color:var(--warn)} .finding.warn .f-tag{color:var(--warn)}
+.finding.bad{border-left-color:var(--bad)}   .finding.bad .f-tag{color:var(--bad)}
+
+.table-card{background:var(--l2); border:1px solid var(--line); border-radius:var(--radius); padding:var(--sp-3); margin:var(--sp-3) 0; overflow-x:auto;}
+table.sci{width:100%; border-collapse:collapse; font-size:14px}
+table.sci thead th{font-family:var(--sans); font-weight:600; font-size:12.5px; color:var(--ink-soft);
+  text-align:left; padding:8px 14px; border-bottom:1px solid var(--line-strong);}
+table.sci tbody td{padding:9px 14px; text-align:left; border-bottom:1px solid var(--line); font-size:14px; vertical-align:top;}
+table.sci tbody tr:last-child td{border-bottom:2px solid var(--line-strong)}
+table.sci tbody td:first-child{font-weight:600}
+.pill{display:inline-block; padding:1px 9px; border-radius:11px; font-size:12px; font-family:var(--sans); font-weight:600; white-space:nowrap}
+.pill.good{background:#e3efe1; color:var(--good)}
+.pill.warn{background:#f3e8cf; color:var(--warn)}
+.pill.bad{background:#f3dcd8; color:var(--bad)}
+.caption{font-size:12.5px; color:var(--ink-faint); margin-top:var(--sp-1)}
+
+code{font-family:var(--mono); font-size:0.88em; background:var(--l2); padding:2px 6px; border-radius:4px; color:var(--accent); border:1px solid var(--line);}
+pre{background:#2a2620; color:#f3eee2; border-radius:8px; padding:14px 18px; overflow-x:auto;
+  font-family:var(--mono); font-size:13px; line-height:1.7; margin:var(--sp-2) 0;}
+pre code{background:none; border:none; padding:0; color:#f3eee2}
+pre .c{color:#9a9387}
+
+.callout{border-left:3px solid var(--ink-soft); background:var(--l2); padding:var(--sp-2) var(--sp-3);
+  border-radius:0 8px 8px 0; margin:var(--sp-2) 0; font-size:14.5px; color:var(--ink-soft);}
+.callout strong{color:var(--ink)}
+
+@media (max-width:900px){
+  .menu-btn{display:block}
+  .nav{position:fixed; left:0; top:0; z-index:40; transform:translateX(-100%); transition:transform .25s; box-shadow:var(--shadow)}
+  .nav.open{transform:translateX(0)}
+  .main{padding:var(--sp-5) var(--sp-3); padding-top:64px}
+  .section{padding:var(--sp-4) var(--sp-3)}
+  .section h2{font-size:27px}
+}
+@media print{
+  .nav,.menu-btn{display:none}
+  body{background:#fff}
+  .section{box-shadow:none; border-color:#ccc; break-inside:avoid}
+  .main{max-width:none; padding:0}
+}
+</style>
+</head>
+
+<body>
+<button class="menu-btn" id="menuBtn" aria-label="目錄">☰</button>
+
+<div class="layout">
+
+  <nav class="nav" id="nav">
+    <div class="nav-brand">templeuser · GOOGLE LOGIN</div>
+    <div class="nav-title">Google 登入<br><em>重新測試</em>步驟卡</div>
+    <ul class="toc" id="toc"></ul>
+  </nav>
+
+  <main class="main" id="main">
+
+    <!-- ============ 封面 ============ -->
+    <section class="section" id="cover" data-title="封面">
+      <div class="eyebrow">RE-TEST GUIDE · 2026-06-10</div>
+      <h2>Google 登入 <em>重新測試</em> 步驟卡</h2>
+      <hr class="rule">
+      <p class="lead">你之前已經在 Web App 點 Google 登入成功過。一次性設定（Google Console + <code>.env</code>）都做完了，這份只走「重新驗證」的最短路徑 —— 確認它現在還活著。</p>
+      <p class="lede">設定是一次性的；成功過就代表設好了。這次只是重新跑一遍，看端到端有沒有斷掉。</p>
+    </section>
+
+    <!-- ============ 前提 ============ -->
+    <section class="section" id="prereq" data-title="前提確認">
+      <h2>前提（之前已完成，這次只是確認還在）</h2>
+      <hr class="rule">
+      <p>你記得登入成功過，代表下面這些<strong>應該都還在</strong>。這次不用重做，只要快速掃一眼沒被改掉就好：</p>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>要確認的東西</th><th>預期值</th></tr></thead>
+          <tbody>
+            <tr><td>Google Console OAuth Client</td><td>還在，redirect URI 仍是 <code>http://localhost:5001/api/members/oauth/google/callback</code></td></tr>
+            <tr><td>Test users 名單</td><td>你要測的那個 Gmail 還在裡面</td></tr>
+            <tr><td><code>backend/.env</code></td><td>仍有 <code>GOOGLE_CLIENT_ID</code> / <code>GOOGLE_CLIENT_SECRET</code> / <code>GOOGLE_CALLBACK_URL</code></td></tr>
+            <tr><td><code>WEBAPP_URL</code> 的 port</td><td>= 前端實際開的 port（native dev 通常是 <code>http://localhost:3000</code>）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <strong>不用再碰 Google Console。</strong> Console 設定是一次性的，成功過就代表設好了。除非你刪過 OAuth Client 或換了 callback 網址，否則這次直接從下面「重新測試」開始。
+      </div>
+    </section>
+
+    <!-- ============ 測試步驟 ============ -->
+    <section class="section" id="steps" data-title="重新測試 5 步">
+      <h2>重新測試 · 五步</h2>
+      <hr class="rule">
+
+      <div class="finding">
+        <div class="f-tag">Step 01 · 啟動後端</div>
+        <p>要能讀到 <code>.env</code> 的 Google 變數。Docker 跑法：</p>
+        <pre><code>docker-compose up -d yuanyin-backend
+<span class="c"># 若這次改過 .env 或 google_login.py，要加 --build：</span>
+<span class="c"># docker-compose up -d --build yuanyin-backend</span></code></pre>
+        <p>確認後端活著（沒帶 token 回 <code>401</code> 是正常的，代表服務有起來）：</p>
+        <pre><code>curl http://localhost:5001/api/members/me</code></pre>
+      </div>
+
+      <div class="finding">
+        <div class="f-tag">Step 02 · 啟動前端</div>
+        <pre><code>cd C:\templeuser\frontend
+npm run dev</code></pre>
+        <p>看它印出的網址（通常 <code>http://localhost:3000</code>）。<strong>這個 port 必須等於 <code>.env</code> 裡的 <code>WEBAPP_URL</code></strong>，否則會「登入成功但跳空白頁」。</p>
+      </div>
+
+      <div class="finding">
+        <div class="f-tag">Step 03 · 開無痕視窗進「我的」頁</div>
+        <p>按 <code>Ctrl+Shift+N</code> 開無痕 → 進 <code>http://localhost:3000</code> → 點到「我的」頁。</p>
+        <p><strong>一定要用無痕。</strong> 一般視窗的瀏覽器擴充（趨勢科技 URL 掃描）會吃掉 OAuth 的 state cookie，害你卡在 <code>invalid_state</code> —— 這是你 LINE 登入時踩過的同一個雷。</p>
+      </div>
+
+      <div class="finding">
+        <div class="f-tag">Step 04 · 按「使用 Google 登入」</div>
+        <p>會被導去 Google 授權畫面 → 選你的 Gmail（Test users 裡那個）→ 按「繼續 / 允許」。</p>
+      </div>
+
+      <div class="finding">
+        <div class="f-tag">Step 05 · 確認登入狀態</div>
+        <p>導回前端時網址會閃過 <code>?login_success=true&amp;token=eyJ...</code>，接著「我的」頁應顯示你的 <strong>Google 名字 + 頭像</strong>。重整頁面（<code>F5</code>）名字還在 = token 有存進 localStorage，端到端通過。</p>
+      </div>
+
+      <div class="finding good">
+        <div class="f-tag">成功長這樣</div>
+        <p>網址出現 <code>login_success=true</code> → 「我的」頁顯示 Google 名字 → 重整後仍在。三個都對 = Google 登入端到端正常，可以接著開 PR 合回 main。</p>
+      </div>
+    </section>
+
+    <!-- ============ 出錯對照 ============ -->
+    <section class="section" id="trouble" data-title="出錯對照表">
+      <h2>如果這次出錯</h2>
+      <hr class="rule">
+      <p>大多是環境問題，不是程式問題。對照症狀直接套解法：</p>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>症狀</th><th>原因</th><th>解法</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>?login_error=invalid_state</code></td>
+              <td>瀏覽器擴充吃掉 state cookie</td>
+              <td><span class="pill warn">改用無痕視窗</span></td>
+            </tr>
+            <tr>
+              <td><code>?login_error=server_error</code><br>後端 log 有 <code>Failed to resolve oauth2.googleapis.com</code></td>
+              <td>Docker 容器 DNS 連不到 Google</td>
+              <td><span class="pill bad">重啟 Docker Desktop</span>（WSL2 DNS 復原）</td>
+            </tr>
+            <tr>
+              <td>登入成功但跳<strong>空白頁 / 連不到</strong></td>
+              <td><code>WEBAPP_URL</code> port ≠ 前端 port</td>
+              <td>改 <code>.env</code> 的 <code>WEBAPP_URL</code> 成前端實際 port，重啟後端</td>
+            </tr>
+            <tr>
+              <td>Google 報 <code>redirect_uri_mismatch</code></td>
+              <td>Console redirect URI 跟 <code>GOOGLE_CALLBACK_URL</code> 不一致</td>
+              <td>兩邊都要 <code>http://localhost:5001/api/members/oauth/google/callback</code></td>
+            </tr>
+            <tr>
+              <td>名字沒出來，但網址有 token</td>
+              <td>前端沒接到 URL token</td>
+              <td>確認 <code>MemberProvider</code> 有讀 URL token（已實作）；清快取重試</td>
+            </tr>
+            <tr>
+              <td>重整後名字消失</td>
+              <td>token 沒存進 localStorage</td>
+              <td>DevTools → Application → Local Storage 看有沒有 <code>lyz_member_token</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="caption">表 1 · 六個常見症狀。前兩個（invalid_state / server_error）是你 LINE 登入時就踩過的，Google 同款。</div>
+      </div>
+    </section>
+
+    <!-- ============ 驗收 ============ -->
+    <section class="section" id="checklist" data-title="驗收清單">
+      <h2>驗收清單</h2>
+      <hr class="rule">
+      <p>六項全綠就算通過：</p>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>驗收項</th><th>通過標準</th></tr></thead>
+          <tbody>
+            <tr><td>後端活著</td><td><code>curl /api/members/me</code> 回 401</td></tr>
+            <tr><td>port 對齊</td><td>前端 port = <code>WEBAPP_URL</code></td></tr>
+            <tr><td>走完 OAuth</td><td>無痕視窗按 Google 登入 → 選帳號 → 允許</td></tr>
+            <tr><td>拿到 token</td><td>網址出現 <code>login_success=true&amp;token=...</code></td></tr>
+            <tr><td>顯示身分</td><td>「我的」頁顯示 Google 名字 + 頭像</td></tr>
+            <tr><td>持久登入</td><td>重整後仍登入</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><strong>通過之後：</strong> Google + LINE 兩條登入就都端到端通了 → 接著就能開 PR 合回 main（roadmap 的 NEXT）。</div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* 自動生成目錄 + 折疊 + scroll-spy（沿用範本） */
+(function(){
+  const main = document.getElementById('main');
+  const toc  = document.getElementById('toc');
+  const sections = [...main.querySelectorAll('.section')];
+
+  sections.forEach(sec=>{
+    const id = sec.id;
+    const title = sec.dataset.title || sec.querySelector('h2')?.textContent || id;
+    const subs = [...sec.querySelectorAll('h3[id]')];
+    const li = document.createElement('li');
+    li.className = 'toc-item'; li.dataset.target = id;
+    const link = document.createElement('a');
+    link.className = 'toc-link'; link.href = '#'+id;
+    link.innerHTML = `<span class="rn"></span><span class="label">${title}</span>`
+                   + (subs.length ? `<span class="arrow">▸</span>` : `<span class="arrow"></span>`);
+    li.appendChild(link);
+    if(subs.length){
+      const ul = document.createElement('ul'); ul.className = 'toc-sub';
+      subs.forEach(h=>{
+        const a = document.createElement('a');
+        a.href = '#'+h.id; a.dataset.target = h.id;
+        a.textContent = h.textContent.replace(/^§\s*/,'');
+        ul.appendChild(a);
+      });
+      li.appendChild(ul);
+    }
+    toc.appendChild(li);
+    link.addEventListener('click', e=>{
+      e.preventDefault();
+      document.getElementById(id).scrollIntoView({behavior:'smooth'});
+      if(subs.length) li.classList.toggle('open');
+      closeNavMobile();
+    });
+  });
+
+  const items = [...toc.querySelectorAll('.toc-item')];
+  const byId = Object.fromEntries(items.map(i=>[i.dataset.target,i]));
+  const spy = new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        items.forEach(i=>i.classList.remove('active'));
+        const it = byId[en.target.id];
+        if(it){ it.classList.add('active'); it.classList.add('open'); }
+      }
+    });
+  }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+  sections.forEach(s=>spy.observe(s));
+
+  const nav = document.getElementById('nav');
+  const menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click', ()=>nav.classList.toggle('open'));
+  function closeNavMobile(){ if(window.innerWidth<=900) nav.classList.remove('open'); }
+})();
+</script>
+</body>
+</html>

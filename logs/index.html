@@ -134,7 +134,7 @@
 
   <div class="stats">
     <div class="stat">
-      <div class="stat-value">3</div>
+      <div class="stat-value">6</div>
       <div class="stat-label">Total Logs</div>
     </div>
     <div class="stat">
@@ -142,7 +142,7 @@
       <div class="stat-label">Current Stage</div>
     </div>
     <div class="stat">
-      <div class="stat-value">05-27</div>
+      <div class="stat-value">06-03</div>
       <div class="stat-label">Last Update</div>
     </div>
   </div>
@@ -156,9 +156,60 @@
     <button class="filter-chip" data-filter="fix">Fix</button>
     <button class="filter-chip" data-filter="audit">Audit</button>
     <button class="filter-chip" data-filter="experiment">Experiment</button>
+    <button class="filter-chip" data-filter="infra">Infra</button>
   </div>
 
   <div class="timeline">
+
+    <article class="log-entry" data-tags="webapp line fix">
+      <a class="log-link" href="./2026-06-03_google-login-and-oauth-buttons.html">
+        <div class="log-date">2026-06-03</div>
+        <h2 class="log-title">Google Login + 登入按鈕 + OAuth 收尾</h2>
+        <p class="log-summary">
+          接續 LINE Login：鏡像結構實作 Google Login（authorize/callback/bind + audience 檢查），
+          「我的」頁加兩顆白底品牌登入按鈕（LINE 綠泡泡 / Google 四色 G），
+          清掉除錯診斷 log，整包 LINE + Google OAuth commit e73c1c0 push 上 feat/line-auth。
+        </p>
+        <div class="log-tags">
+          <span class="log-tag webapp">Web App</span>
+          <span class="log-tag line">LINE</span>
+          <span class="log-tag fix">Fix</span>
+        </div>
+      </a>
+    </article>
+
+    <article class="log-entry" data-tags="webapp line fix">
+      <a class="log-link" href="./2026-06-03_line-login-oauth-debug.html">
+        <div class="log-date">2026-06-03</div>
+        <h2 class="log-title">LINE Login OAuth 除錯馬拉松</h2>
+        <p class="log-summary">
+          在 templeuser（Web App）實作 LINE Login。OAuth 後端很快寫完，但「前端看不到登入」
+          底下藏了 8 層獨立問題：rewrites 缺 members、巢狀 head、趨勢科技擴充擋 state、
+          Docker DNS、CORS、最終是代理 fallback 到 prod 後端。逐層剝到只剩驗證最後修復。
+        </p>
+        <div class="log-tags">
+          <span class="log-tag webapp">Web App</span>
+          <span class="log-tag line">LINE</span>
+          <span class="log-tag fix">Fix</span>
+        </div>
+      </a>
+    </article>
+
+    <article class="log-entry" data-tags="stage-pre4 infra">
+      <a class="log-link" href="./2026-05-27_git-setup-and-templeuser-clone.html">
+        <div class="log-date">2026-05-27</div>
+        <h2 class="log-title">Git 結構重整 + Web App 跑起來</h2>
+        <p class="log-summary">
+          重大基礎建設：發現過去幾個月程式碼從未真正上 GitHub
+          （.git 在子資料夾、工作目錄不在版控）。重整結構、8 個分批 commit、
+          上版控。同時 clone 學長 templeuser 跑起來，週三會議準備就緒。
+        </p>
+        <div class="log-tags">
+          <span class="log-tag stage">Pre-Stage4</span>
+          <span class="log-tag">Infra</span>
+        </div>
+      </a>
+    </article>
 
     <article class="log-entry" data-tags="stage-pre4 line experiment">
       <a class="log-link" href="./2026-05-27_line-message-testkit.html">

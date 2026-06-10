@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>緣引拜拜通 · 現況架構總綱</title>
+<style>
+  :root {
+    --bg: #1a1612; --bg-elevated: #221d18; --bg-card: #2a2420;
+    --border: #3a322c; --border-strong: #4a4038;
+    --text: #e8e0d4; --text-muted: #9a9088; --text-dim: #6a6058;
+    --accent: #c9a961; --accent-soft: #c9a96133;
+    --green: #8fbc6c; --amber: #d4a04c; --red: #c97a6b; --blue: #7ba3c4;
+    --mono: "JetBrains Mono","Consolas",monospace;
+    --serif: "Noto Serif TC","PingFang TC",serif;
+    --sans: "Noto Sans TC","Microsoft JhengHei",sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--sans);
+    line-height: 1.8; padding: 0; min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 15% 0%, #2a201822 0%, transparent 45%),
+      radial-gradient(circle at 85% 100%, #1f2a2222 0%, transparent 45%);
+  }
+  .layout { max-width: 1080px; margin: 0 auto; padding: 48px 24px; }
+
+  /* ===== TOC sidebar (sticky top on mobile) ===== */
+  .toc {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 8px; padding: 20px 24px; margin-bottom: 48px;
+  }
+  .toc-title {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+  }
+  .toc-list { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 4px 24px; }
+  .toc-list li { padding: 4px 0; }
+  .toc-list a {
+    color: var(--text-muted); text-decoration: none; font-size: 14px;
+    display: flex; align-items: baseline; gap: 8px; transition: color 0.15s;
+  }
+  .toc-list a:hover { color: var(--accent); }
+  .toc-num { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+
+  /* ===== header ===== */
+  .header { border-bottom: 2px solid var(--accent); padding-bottom: 36px; margin-bottom: 56px; }
+  .header-tag {
+    display: inline-block; font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
+    padding: 4px 10px; border: 1px solid var(--accent); border-radius: 2px; margin-bottom: 20px;
+  }
+  .header h1 { font-family: var(--serif); font-weight: 700; font-size: 48px; line-height: 1.15; margin-bottom: 16px; }
+  .header-sub { font-family: var(--serif); font-style: italic; font-size: 18px; color: var(--text-muted); margin-bottom: 20px; }
+  .header-meta { font-family: var(--mono); font-size: 12px; color: var(--text-dim); letter-spacing: 0.05em; }
+
+  /* ===== section ===== */
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  .section-title {
+    font-family: var(--serif); font-size: 28px; font-weight: 700; margin-bottom: 24px;
+    padding-bottom: 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; gap: 14px;
+  }
+  .section-num {
+    font-family: var(--mono); font-size: 16px; color: var(--accent);
+    font-weight: 400; flex-shrink: 0;
+  }
+  h3 { font-family: var(--serif); font-size: 20px; color: var(--accent); margin: 32px 0 14px; font-weight: 500; }
+  h4 { font-family: var(--sans); font-size: 16px; color: var(--text); margin: 20px 0 10px; font-weight: 700; }
+
+  .prose { color: var(--text-muted); font-size: 15px; }
+  .prose p + p { margin-top: 14px; }
+  .prose strong { color: var(--text); }
+
+  code {
+    font-family: var(--mono); font-size: 0.9em; background: var(--bg-elevated);
+    padding: 2px 6px; border-radius: 2px; color: var(--accent);
+  }
+  pre {
+    background: #0f0c0a; border: 1px solid var(--border); border-radius: 6px;
+    padding: 18px 22px; overflow-x: auto; font-family: var(--mono);
+    font-size: 13px; line-height: 1.6; color: var(--text); margin: 16px 0;
+  }
+  pre code { background: none; padding: 0; color: var(--text); }
+
+  /* diagram */
+  .diagram {
+    background: #0f0c0a; border: 1px solid var(--border); border-radius: 8px;
+    padding: 28px; margin: 24px 0; font-family: var(--mono); font-size: 13px;
+    line-height: 1.55; white-space: pre; overflow-x: auto;
+  }
+  .d-accent { color: var(--accent); font-weight: bold; }
+  .d-green { color: var(--green); }
+  .d-blue { color: var(--blue); }
+  .d-dim { color: var(--text-dim); }
+  .d-amber { color: var(--amber); }
+  .d-red { color: var(--red); }
+
+  /* metaphor box */
+  .metaphor {
+    background: linear-gradient(135deg, var(--accent-soft) 0%, transparent 100%);
+    border: 1px solid var(--accent); border-radius: 8px; padding: 28px 32px; margin: 24px 0;
+  }
+  .metaphor-title { font-family: var(--serif); font-size: 22px; color: var(--accent); margin-bottom: 14px; }
+  .metaphor-body { color: var(--text); font-size: 15px; }
+  .metaphor-body strong { color: var(--accent); }
+
+  /* cards */
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); padding: 18px 22px; border-radius: 4px; margin-bottom: 14px;
+  }
+  .card.warn { border-left-color: var(--amber); }
+  .card.info { border-left-color: var(--blue); }
+  .card.danger { border-left-color: var(--red); }
+  .card.ok { border-left-color: var(--green); }
+  .card-title {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em;
+    color: var(--accent); text-transform: uppercase; margin-bottom: 8px;
+  }
+  .card.warn .card-title { color: var(--amber); }
+  .card.info .card-title { color: var(--blue); }
+  .card.danger .card-title { color: var(--red); }
+  .card.ok .card-title { color: var(--green); }
+  .card-body { font-size: 14px; color: var(--text); }
+
+  /* table */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+  td { color: var(--text-muted); }
+  td strong { color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+
+  /* decision row */
+  .decision {
+    display: grid; grid-template-columns: 1fr 2fr; gap: 16px;
+    padding: 16px 0; border-bottom: 1px dashed var(--border);
+  }
+  .decision:last-child { border-bottom: none; }
+  .decision-choice { font-family: var(--serif); font-size: 16px; color: var(--text); }
+  .decision-why { font-size: 14px; color: var(--text-muted); }
+
+  /* status badge */
+  .badge {
+    display: inline-block; font-family: var(--mono); font-size: 10px;
+    letter-spacing: 0.08em; padding: 2px 8px; border-radius: 2px; margin-right: 6px;
+  }
+  .badge.done { background: #2d4a2433; color: var(--green); border: 1px solid #2d4a24; }
+  .badge.wip { background: #4a3a2433; color: var(--amber); border: 1px solid #4a3a24; }
+  .badge.todo { background: #2a242033; color: var(--text-dim); border: 1px solid var(--border-strong); }
+
+  /* checklist */
+  .checklist { list-style: none; }
+  .checklist li {
+    padding: 8px 0 8px 30px; position: relative; color: var(--text-muted);
+    border-bottom: 1px dashed var(--border); font-size: 14px;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li::before {
+    content: "○"; position: absolute; left: 0; top: 8px; color: var(--text-dim); font-family: var(--mono);
+  }
+  .checklist li.done::before { content: "●"; color: var(--green); }
+  .checklist li.done { color: var(--text-dim); }
+  .checklist li.wip::before { content: "◐"; color: var(--amber); }
+
+  /* two col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 16px 0; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+  .footer {
+    margin-top: 80px; padding-top: 28px; border-top: 1px solid var(--border);
+    text-align: center; color: var(--text-dim); font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.1em; line-height: 2;
+  }
+
+  @media (max-width: 640px) {
+    .layout { padding: 28px 16px; }
+    .header h1 { font-size: 32px; }
+    .section-title { font-size: 22px; }
+    .decision { grid-template-columns: 1fr; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ====== HEADER ====== -->
+  <header class="header">
+    <div class="header-tag">Master Architecture · 現況總綱</div>
+    <h1>緣引拜拜通<br>現況架構總綱</h1>
+    <div class="header-sub">這個專案在做什麼、三系統的完整架構、以及為什麼這樣選</div>
+    <div class="header-meta">版本 v4（補全三系統：Web App + LINE Gateway + 宮廟後台 TEP）· 2026-06-10 · 已對照實際 code 校正 · 取代 md/ 內所有舊架構文件</div>
+  </header>
+
+  <!-- ====== TOC ====== -->
+  <nav class="toc">
+    <div class="toc-title">目錄</div>
+    <ul class="toc-list">
+      <li><a href="#s0"><span class="toc-num">00</span>這份文件解決什麼</a></li>
+      <li><a href="#s1"><span class="toc-num">01</span>專案在做什麼</a></li>
+      <li><a href="#s2"><span class="toc-num">02</span>架構轉向（舊→新）</a></li>
+      <li><a href="#s3"><span class="toc-num">03</span>三系統全貌</a></li>
+      <li><a href="#s4"><span class="toc-num">04</span>為什麼這樣選</a></li>
+      <li><a href="#s5"><span class="toc-num">05</span>技術棧（三系統）</a></li>
+      <li><a href="#s6"><span class="toc-num">06</span>Web App 後端模組 + 雙層認證</a></li>
+      <li><a href="#s7"><span class="toc-num">07</span>帳號系統（LINE + Google）</a></li>
+      <li><a href="#s8"><span class="toc-num">08</span>宮廟後台 TEP 詳解</a></li>
+      <li><a href="#s9"><span class="toc-num">09</span>LINE Gateway 詳解</a></li>
+      <li><a href="#s10"><span class="toc-num">10</span>資料模型（三系統）</a></li>
+      <li><a href="#s11"><span class="toc-num">11</span>分工</a></li>
+      <li><a href="#s12"><span class="toc-num">12</span>目前進度</a></li>
+      <li><a href="#s13"><span class="toc-num">13</span>接下來要做</a></li>
+      <li><a href="#s14"><span class="toc-num">14</span>不做的事</a></li>
+    </ul>
+  </nav>
+
+  <!-- ====== 00 ====== -->
+  <section id="s0">
+    <h2 class="section-title"><span class="section-num">00</span>這份文件解決什麼</h2>
+    <div class="prose">
+      <p><strong>問題：</strong>專案在 2026-05-26 經歷了一次重大架構轉向（從「LINE 為主」改成「Web App 為主」）。但轉向後，<code>md/</code> 資料夾裡所有舊文件描述的還是舊架構，而且白紙黑字寫著「不做 Next.js / 不做 Docker / 不做信眾 Web App」——跟現在實際在做的事完全矛盾。</p>
+      <p>轉向後的「現況」只散落在三個地方：HTML task log（記每次做了什麼）、轉向盤點 log（記新舊差異）、Web App 那邊的架構書（只講 Web App）。<strong>沒有一份文件完整講清楚三個系統（Web App + LINE + 宮廟後台 TEP）的全貌、為什麼這樣選、整個專案在做什麼。</strong></p>
+      <p><strong>這份文件就是補上那個缺口。</strong>它是「現況總綱」——開新對話、新人加入、或自己三個月後回來，看這一份就懂全貌。所有數字與名稱都已對照三個 repo 的實際 code 校正過。</p>
+    </div>
+    <div class="card danger">
+      <div class="card-title">重要 · 舊文件作廢通知</div>
+      <div class="card-body">
+        <code>md/新對話視窗_Onboarding包.md</code>、<code>md/宮廟數位互動平台_整體架構_給顧問版.md</code>、<code>md/首要目標.md</code> 描述的都是<strong>舊架構</strong>（LINE 為主、拒絕 Web App）。它們是歷史紀錄、不是現況。以本文件為準。
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 01 ====== -->
+  <section id="s1">
+    <h2 class="section-title"><span class="section-num">01</span>專案在做什麼</h2>
+    <div class="prose">
+      <p><strong>緣引拜拜通</strong>是一個宮廟數位轉型專案。讓信眾能線上探索廟宇、查神明、看參拜指南、依需求找「求○○該拜誰」、收藏關注廟宇、（規劃中）報名活動，並透過 LINE 收到關注廟宇的活動通知。</p>
+      <p>這是一個<strong>體驗型專案</strong>，不是功能型專案：</p>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">功能型（不是這個）</div>
+        <div class="card-body">像報稅系統——使用者完成任務就走、過程越短越好。</div>
+      </div>
+      <div class="card ok">
+        <div class="card-title">體驗型（這個）</div>
+        <div class="card-body">使用者產生情感連結、想再回來。每個功能要讓人覺得<strong>儀式感、被理解感、內心平靜</strong>。</div>
+      </div>
+    </div>
+    <div class="card warn">
+      <div class="card-title">核心信念 · 警惕遊戲化陷阱</div>
+      <div class="card-body">不做積分、徽章、稀有度這類遊戲化機制——不適合廟宇場景，會違反核心信念。</div>
+    </div>
+
+    <h3>內容現況（依 Web App seed 校正）</h3>
+    <table>
+      <tr><th>內容</th><th>數量</th><th>說明</th></tr>
+      <tr><td>神明（deities）</td><td><strong>10 位</strong></td><td>三官大帝、媽祖、文昌、財神、土地公、保生大帝、註生娘娘、玄天上帝、城隍、月老（seed 已建，規劃擴充）</td></tr>
+      <tr><td>需求標籤（needs）</td><td><strong>12 類</strong></td><td>姻緣 / 財富 / 學業 / 事業 / 健康 / 求子 / 平安 / 除煞 / 太歲 / 安神 / 家庭 / 其他</td></tr>
+      <tr><td>廟宇（temples）</td><td><strong>12 間</strong></td><td>5 間示範（已發布）+ 7 間 core 骨架（draft、待田調）</td></tr>
+      <tr><td>拜拜指南（guides）</td><td>規劃中</td><td>seed 尚未含指南內容</td></tr>
+    </table>
+    <div class="prose"><p>示範主力廟：白河三官寶殿。另有霧峰南天宮等。</p></div>
+  </section>
+
+  <!-- ====== 02 ====== -->
+  <section id="s2">
+    <h2 class="section-title"><span class="section-num">02</span>架構轉向（舊 → 新）</h2>
+    <div class="prose">
+      <p>2026-05-26 的關鍵決定：<strong>從「LINE 為主」轉向「Web App 為主」。</strong>這是理解整個專案的關鍵。</p>
+    </div>
+
+    <div class="two-col">
+      <div class="card danger">
+        <div class="card-title">舊架構（已淘汰）</div>
+        <div class="card-body">
+          LINE 是主要介面。信眾在 LINE 內用 LIFF 完成所有事：訂閱、報名、查詢。<br><br>
+          明確拒絕：React / Next.js / Docker / 信眾 Web App。<br><br>
+          LINE 對接層（Flask）直接打 TEP。
+        </div>
+      </div>
+      <div class="card ok">
+        <div class="card-title">新架構（現況）</div>
+        <div class="card-body">
+          Web App 是主場。信眾真正在 Web App 完成所有事。<br><br>
+          LINE 變成「招牌 + 通知通道」——降低門檻、發推播、把人導去 Web App。<br><br>
+          擁抱 Next.js + Docker + Web App。
+        </div>
+      </div>
+    </div>
+
+    <div class="metaphor">
+      <div class="metaphor-title">一句話比喻：LINE 像招牌、Web App 是店、TEP 是倉庫</div>
+      <div class="metaphor-body">
+        <strong>LINE</strong> 像星巴克的官方帳號——你不會在 LINE 裡喝咖啡，但每次它推新品、卡片做得讓你想點進去。<br>
+        <strong>Web App</strong> 是「店」本身——所有真正能逛、能看、能做的事都在這。<br>
+        <strong>TEP</strong> 是「進貨倉庫」——活動、報名這些資料未來的家（學長另一個既有的廟方後端平台）。
+      </div>
+    </div>
+
+    <h3>為什麼轉向</h3>
+    <table>
+      <tr><th>舊架構的問題</th><th>新架構怎麼解</th></tr>
+      <tr><td>LINE 內 LIFF 能做的體驗有限</td><td>Web App 可以做完整的視覺、互動、地圖、參拜引導</td></tr>
+      <tr><td>所有功能擠在 LINE 裡、難以擴充</td><td>Web App 是完整系統、要加功能很自由</td></tr>
+      <tr><td>難以做 SEO、被搜尋到</td><td>Web App 有獨立網址、可被 Google 收錄</td></tr>
+      <tr><td>非 LINE 用戶完全無法使用</td><td>Web App 任何人都能開、Google 登入也行</td></tr>
+    </table>
+  </section>
+
+  <!-- ====== 03 ====== -->
+  <section id="s3">
+    <h2 class="section-title"><span class="section-num">03</span>三系統全貌</h2>
+
+    <div class="diagram"><span class="d-dim">信眾的手機 / 電腦</span>
+       │                                  │
+       │ 瀏覽器                            │ LINE App
+       ▼                                  ▼
+┌──────────────────────────┐     ┌──────────────────────┐
+│ <span class="d-blue">Web App 主場（緣引拜拜通）</span> │     │ <span class="d-green">LINE Gateway</span>          │
+│ Next.js 前端 + Flask 後端  │     │ Flask（line-gateway） │
+│ <span class="d-blue">長諺主導 + Max 做後端整合</span>  │     │ <span class="d-green">Max 全包</span>              │
+│                          │     │                       │
+│ · 廟宇 / 神明 / 指南 / 需求│     │ · Rich Menu 招牌      │
+│ · 登入 / 收藏 / AI 祈禱文 │     │ · Flex 訊息 / 推播    │
+│ · 地圖（Google Maps）     │     │ · Webhook / 關鍵字    │
+└────────┬─────────────────┘     └──────────┬────────────┘
+         │                                  │
+         │ 自有內容資料                       │ 推播時查「誰訂閱了」
+         ▼                                  │（規劃中的內部 API）
+┌────────────────────────────────────────┐ │
+│ <span class="d-amber">MySQL：yuanyin</span>（Web App 後端的）      │◀┘
+│ members / wishes / favorites / temples  │
+│ deities / guides / needs / analytics    │
+└────────┬───────────────────────────────┘
+         │ <span class="d-dim">（規劃：報名階段才對接）</span>
+         │ POST /api/public/events/{id}/register（帶 lineUserId）
+         ▼
+┌──────────────────────────────────────────┐
+│ <span class="d-amber">TEP（宮廟後台 / amulet_system_v2）</span>        │
+│ <span class="d-dim">學長既有平台 · Flask + React19×4 + MySQL</span>  │
+│ 廟方管理後台 / 官網 CMS / 信眾端 / LIFF      │
+│ 活動・報名・打卡・點燈・電商・通知           │
+└──────────────────────────────────────────┘</div>
+
+    <h3>三句話定位</h3>
+    <table>
+      <tr><th>系統</th><th>一句話</th><th>對信眾</th></tr>
+      <tr><td><strong>Web App（緣引拜拜通）</strong></td><td>信眾真正在用的主場</td><td>唯一會看到完整內容的地方</td></tr>
+      <tr><td><strong>LINE Gateway</strong></td><td>招牌 + 通知通道</td><td>不放內容，只發通知、指路</td></tr>
+      <tr><td><strong>TEP（宮廟後台）</strong></td><td>廟方營運平台 + 活動/報名資料的家</td><td>看不到（在背後供應資料）</td></tr>
+    </table>
+
+    <div class="card info">
+      <div class="card-title">關鍵釐清 · 三件容易搞混的事</div>
+      <div class="card-body">
+        ① <strong>Web App 目前自帶廟/神/指南內容</strong>（存在自己的 <code>yuanyin</code> MySQL），不是即時從 TEP 抓。跟 TEP 的整合是在<strong>「報名」階段</strong>才發生（打 TEP 的 public 報名 API）。<br><br>
+        ② <strong>TEP 自己也內建 LINE</strong>（有 line_users 表、<code>/api/line/webhook</code>、一個 LIFF app）。新架構下，<strong>LINE 的統一窗口是 Max 的 LINE Gateway</strong>，取代散在 TEP 裡的 LINE 功能，避免兩套 LINE 打架。<br><br>
+        ③ <strong>「Web App」≠「TEP」</strong>。它們是兩個不同的 repo、不同的 MySQL、不同前端框架（Next.js vs React19）。Web App 是新的信眾體驗層，TEP 是既有的廟方營運平台。
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 04 ====== -->
+  <section id="s4">
+    <h2 class="section-title"><span class="section-num">04</span>為什麼這樣選（關鍵決策）</h2>
+
+    <div class="decision">
+      <div class="decision-choice">用 LINE 當招牌、不重做 App</div>
+      <div class="decision-why">信眾年齡層偏大、LINE 覆蓋率高。LINE 負責「敲門通知」，真正服務在 Web App。</div>
+    </div>
+    <div class="decision">
+      <div class="decision-choice">Web App 用 Next.js 14（App Router）</div>
+      <div class="decision-why">學長已經會、已經做了不少。SSR + RSC 對 SEO 好、體驗像 App。</div>
+    </div>
+    <div class="decision">
+      <div class="decision-choice">地圖用 Google Maps（@vis.gl/react-google-maps）</div>
+      <div class="decision-why">需要 Places 評論數→知名度、和台灣在地圖資準確度。（早期試過 Leaflet，已改用 Google Maps；Leaflet 套件殘留但未使用。）</div>
+    </div>
+    <div class="decision">
+      <div class="decision-choice">對接 TEP、不重建廟方後端</div>
+      <div class="decision-why">學長已有 TEP（活動/報名/廟方營運）。避免重工，報名階段透過 public API 對接。</div>
+    </div>
+    <div class="decision">
+      <div class="decision-choice">Web App 資料庫用 MySQL（不是 PostgreSQL）</div>
+      <div class="decision-why">學長的 templeuser 與 TEP 本來都用 MySQL 8。統一生態、避免兩套。</div>
+    </div>
+    <div class="decision">
+      <div class="decision-choice">用 Docker 跑開發環境</div>
+      <div class="decision-why">學長已把 MySQL + Flask + Next.js 包成 docker-compose 一鍵啟動。（注意：舊架構曾拒絕 Docker，新架構推翻）</div>
+    </div>
+    <div class="decision">
+      <div class="decision-choice">用 Zeabur 部署</div>
+      <div class="decision-why">台灣節點、$5/月、GitHub 一鍵自動部署。</div>
+    </div>
+    <div class="decision">
+      <div class="decision-choice">帳號用 LINE Login + Google Login</div>
+      <div class="decision-why">LINE Login 為主（綁了才能收推播）、Google 為輔（門檻低、跨裝置）。email 重複用「提示綁定」策略（C 方案）。</div>
+    </div>
+    <div class="decision">
+      <div class="decision-choice">Web App 後端用 Flask 模組化自動發現</div>
+      <div class="decision-why">加新功能 = 加一個模組資料夾（manifest + routes + models），自動掛載，不動別人的 code。</div>
+    </div>
+    <div class="decision">
+      <div class="decision-choice">LINE Gateway 獨立 repo</div>
+      <div class="decision-why">LINE 對接的職責跟 Web App 不同。獨立的 line-gateway repo，透過 API 跟 Web App 互通。</div>
+    </div>
+  </section>
+
+  <!-- ====== 05 ====== -->
+  <section id="s5">
+    <h2 class="section-title"><span class="section-num">05</span>技術棧（三系統）</h2>
+
+    <h3>① Web App — 緣引拜拜通（repo: changyen26/templeuser）</h3>
+    <table>
+      <tr><th>層</th><th>技術</th><th>port</th></tr>
+      <tr><td>前端</td><td>Next.js 14.2.15（App Router + RSC）· Tailwind 3.4 · Google Maps(@vis.gl/react-google-maps) · @tremor/react · framer-motion · lucide-react · swr</td><td>3000(dev) / 3001(docker)</td></tr>
+      <tr><td>後端</td><td>Flask 3 + SQLAlchemy + JWT（模組化自動發現，11 模組）</td><td>5001</td></tr>
+      <tr><td>資料庫</td><td>MySQL 8.0（db=<code>yuanyin</code>, utf8mb4）</td><td>3308→3306</td></tr>
+      <tr><td>容器</td><td>Docker Compose（mysql + backend + frontend 三服務一鍵起）</td><td>—</td></tr>
+      <tr><td>前後端橋接</td><td>Next rewrites 同源代理 <code>/api/*</code> → Flask（12 組路徑）</td><td>—</td></tr>
+    </table>
+
+    <h3>② LINE Gateway（repo: Shih-Wei-Ciou/line-gateway）</h3>
+    <table>
+      <tr><th>層</th><th>技術</th><th>port</th></tr>
+      <tr><td>後端</td><td>Python 3.11+ · Flask 3 · SQLAlchemy 2 · Flask-Migrate</td><td>5002</td></tr>
+      <tr><td>LINE SDK</td><td>line-bot-sdk-python v3（3.5.0）</td><td>—</td></tr>
+      <tr><td>資料庫</td><td>PostgreSQL（規劃統一改 MySQL，尚未執行）</td><td>—</td></tr>
+      <tr><td>本地測試</td><td>ngrok（Webhook 需 HTTPS）</td><td>—</td></tr>
+    </table>
+
+    <h3>③ 宮廟後台 TEP（tep-master · amulet_system_v2）</h3>
+    <table>
+      <tr><th>層</th><th>技術</th><th>port</th></tr>
+      <tr><td>後端</td><td>Python 3.11 · Flask 3.0 · SQLAlchemy + PyMySQL · PyJWT + bcrypt · Flask-Limiter · flasgger(Swagger) · APScheduler · Gunicorn</td><td>5000</td></tr>
+      <tr><td>前端 ×4</td><td>全部 React 19 + Vite：廟方管理後台(Recharts) · 官網 CMS sgbd(Tailwind4+Framer) · 信眾端 user-web(AntD6, Mock) · LIFF(@line/liff 2.28)</td><td>5173–5176</td></tr>
+      <tr><td>資料庫</td><td>MySQL 8.0（db=<code>amulet_system_v2</code>, 30+ 表）</td><td>—</td></tr>
+      <tr><td>反向代理</td><td>Nginx（Alpine）</td><td>80</td></tr>
+    </table>
+
+    <h3>LINE Channel（兩個）</h3>
+    <table>
+      <tr><th>Channel</th><th>用途</th></tr>
+      <tr><td>Messaging API Channel</td><td>訊息收發、Webhook、推播、Rich Menu（line-gateway 用）</td></tr>
+      <tr><td>LINE Login Channel</td><td>LINE Login OAuth（Web App 帳號登入用）</td></tr>
+    </table>
+  </section>
+
+  <!-- ====== 06 ====== -->
+  <section id="s6">
+    <h2 class="section-title"><span class="section-num">06</span>Web App 後端模組 + 雙層認證</h2>
+
+    <h3>11 個 Flask 模組（自動發現）</h3>
+    <div class="prose"><p>每個模組是 <code>app/modules/&lt;name&gt;/</code> 下的 <code>manifest.py + routes.py + models.py</code>，啟動時自動掛載。</p></div>
+    <table>
+      <tr><th>模組</th><th>url_prefix</th><th>職責</th></tr>
+      <tr><td><strong>temples</strong></td><td><code>/api/temples</code></td><td>廟宇 CRUD、查詢、附近廟</td></tr>
+      <tr><td><strong>deities</strong></td><td><code>/api/deities</code></td><td>神明資料</td></tr>
+      <tr><td><strong>guides</strong></td><td><code>/api/guides</code></td><td>拜拜指南文章</td></tr>
+      <tr><td><strong>needs</strong></td><td><code>/api/needs</code></td><td>需求知識圖譜（需求→神→廟，「求○○去哪拜」）</td></tr>
+      <tr><td><strong>members</strong></td><td><code>/api/members</code></td><td>會員、OAuth 登入、許願、收藏（<strong>Max 主責</strong>）</td></tr>
+      <tr><td><strong>auth</strong></td><td><code>/api/auth</code></td><td>後台管理員登入（與 members 完全分開）</td></tr>
+      <tr><td><strong>admin</strong></td><td><code>/api/admin</code></td><td>管理後台 CRUD（廟/神/需求/查驗工作流）</td></tr>
+      <tr><td><strong>analytics</strong></td><td><code>/api/analytics</code></td><td>隱私優先行為事件收集、排行、趨勢</td></tr>
+      <tr><td><strong>ai</strong></td><td><code>/api/ai</code></td><td>AI 祈禱文生成</td></tr>
+      <tr><td><strong>worship</strong></td><td><code>/api/worship</code></td><td>參拜動線地圖 / 參拜紀錄</td></tr>
+      <tr><td><strong>line</strong></td><td><code>/api/line</code></td><td>Web App 端的 LINE 相關（LIFF / webhook 接點）</td></tr>
+    </table>
+
+    <h3>雙層認證（兩套完全隔離的 JWT）</h3>
+    <table>
+      <tr><th></th><th>後台 admin</th><th>會員 member</th></tr>
+      <tr><td>守門</td><td><code>@require_admin</code>（auth 模組）</td><td><code>@require_member</code>（members 模組）</td></tr>
+      <tr><td>token 放哪</td><td>JWT in <strong>httpOnly cookie</strong></td><td>JWT <strong>Bearer</strong> / localStorage <code>lyz_member_token</code></td></tr>
+      <tr><td>claims</td><td><code>role=super_admin</code>, <code>temple_scope=*</code></td><td><code>kind=member</code>, <code>memberId</code>, <code>lineUserId</code></td></tr>
+      <tr><td>登入端點</td><td><code>POST /api/auth/login</code></td><td>OAuth callback 簽發 / <code>POST /api/members/session</code></td></tr>
+      <tr><td>隔離</td><td colspan="2">兩套互不相通：admin cookie token 會被 <code>@require_member</code> 拒絕，反之亦然。</td></tr>
+    </table>
+    <div class="card danger">
+      <div class="card-title">資安紅線 · ADMIN_AUTH_DISABLED</div>
+      <div class="card-body">
+        <code>ADMIN_AUTH_DISABLED=1</code> 是本機測試後門（後台免登入）。<strong>正式上線（Zeabur）絕對不可設</strong>，不設＝預設要登入。
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 07 ====== -->
+  <section id="s7">
+    <h2 class="section-title"><span class="section-num">07</span>帳號系統（已完成 · Max 核心成果）</h2>
+    <div class="prose">
+      <p>Web App 原本只有 demo 假登入。Max 在 <code>feat/line-auth</code> branch 加上完整的 <strong>LINE Login + Google Login</strong> OAuth。</p>
+    </div>
+
+    <h3>登入流程</h3>
+    <div class="diagram"><span class="d-dim">信眾</span>
+  │
+  │ 點「使用 LINE 登入」或「使用 Google 登入」（白底品牌按鈕）
+  ▼
+<span class="d-accent">Flask 後端</span> /api/members/oauth/{line|google}/authorize
+  │ 種 oauth_state cookie（防 CSRF）→ 導向 OAuth 授權頁
+  ▼
+<span class="d-green">LINE / Google 伺服器</span> → 使用者按「允許」→ 回 callback 帶 code+state
+  │
+  ▼
+<span class="d-accent">Flask 後端</span> /callback
+  │ ① 驗 state（比對 cookie）
+  │ ② 用 code 換 id_token
+  │ ③ 驗 id_token → 拿 UID/sub + 名字 + email（Google 還驗 audience）
+  │ ④ 帳號合併檢查（email 衝突 → C 方案提示綁定）
+  │ ⑤ upsert member → 簽 member JWT
+  │ ⑥ 導回前端 /?token=eyJ...
+  ▼
+<span class="d-blue">Next.js 前端</span>
+  │ MemberProvider 讀 URL token → 存 localStorage(lyz_member_token)
+  │ 打 /api/members/me → 驗 JWT → 顯示名字
+  ▼
+<span class="d-dim">信眾看到「○○○ · LINE 會員」🎉</span></div>
+
+    <div class="card warn">
+      <div class="card-title">關鍵設計 · 登入按鈕必須用「絕對網址」</div>
+      <div class="card-body">
+        其他 API 走相對 <code>/api</code>（Next 同源代理避 CORS）。但 OAuth 例外：<code>authorize</code> 種的 <code>oauth_state</code> cookie 必須由 callback <strong>同一個 origin</strong> 讀回驗證，所以登入按鈕直接指後端 origin，不能走代理（否則永遠 <code>invalid_state</code>）。
+      </div>
+    </div>
+
+    <h3>帳號合併 C 方案</h3>
+    <div class="prose">
+      <p>同一個 email 先用 Google 註冊、後來想用 LINE 登入（或反過來）——系統<strong>不自動合併</strong>（避免誤判），而是提示「此 email 已用 X 註冊，要綁定嗎？」使用者同意才把第二個 OAuth 識別寫進同一個帳號。對應 <code>bind</code> 端點。</p>
+    </div>
+
+    <h3>關鍵端點（前綴 <code>/api/members</code>）</h3>
+    <table>
+      <tr><th>Method</th><th>Path</th><th>用途</th></tr>
+      <tr><td>GET</td><td><code>/oauth/line/authorize</code></td><td>導去 LINE 授權</td></tr>
+      <tr><td>GET</td><td><code>/oauth/line/callback</code></td><td>LINE 回來後處理 + 簽 JWT</td></tr>
+      <tr><td>POST</td><td><code>/oauth/line/bind</code></td><td>補綁 LINE（C 方案）</td></tr>
+      <tr><td>GET</td><td><code>/oauth/google/authorize</code></td><td>導去 Google 授權</td></tr>
+      <tr><td>GET</td><td><code>/oauth/google/callback</code></td><td>Google 回來後處理 + 簽 JWT</td></tr>
+      <tr><td>POST</td><td><code>/oauth/google/bind</code></td><td>補綁 Google（C 方案）</td></tr>
+      <tr><td>GET</td><td><code>/me</code></td><td>用 member JWT 取得自己資訊</td></tr>
+    </table>
+    <div class="card info">
+      <div class="card-title">dev 設定 · BACKEND_INTERNAL_URL 必設</div>
+      <div class="card-body">
+        本機 <code>frontend/.env.local</code> 必須設 <code>BACKEND_INTERNAL_URL=http://localhost:5001</code>，否則 Next 代理會 fallback 到正式站 Zeabur 後端 → 本地簽的 token 被不同 JWT secret 驗 → 401。
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 08 ====== -->
+  <section id="s8">
+    <h2 class="section-title"><span class="section-num">08</span>宮廟後台 TEP 詳解</h2>
+    <div class="prose">
+      <p><strong>TEP（Temple Events Platform，資料庫 <code>amulet_system_v2</code>）</strong>是學長既有的一套完整廟方營運平台，比 Web App 更早存在、規模更大。新架構把它定位成「<strong>倉庫</strong>」——活動 / 報名 / 廟方營運資料的源頭，Web App 在報名階段透過它的 public API 對接。</p>
+    </div>
+
+    <h3>它是什麼 · 服務誰</h3>
+    <table>
+      <tr><th>角色</th><th>介面</th><th>場景</th></tr>
+      <tr><td>廟方管理員</td><td>廟方管理後台（frontend）/ 官網 CMS（sgbd）</td><td>建活動、發推播、看名單、管理廟宇/商品/訂單/營收</td></tr>
+      <tr><td>信眾</td><td>信眾端 App（user-web，目前 Mock）/ LIFF</td><td>打卡集點、兌換、活動報名</td></tr>
+      <tr><td>系統管理員</td><td>super admin</td><td>平台級監控</td></tr>
+    </table>
+
+    <h3>四個前端 + 一個後端</h3>
+    <table>
+      <tr><th>子專案</th><th>是什麼</th><th>狀態</th></tr>
+      <tr><td><code>backend</code></td><td>Flask REST API（~105 endpoints，Swagger <code>/api/docs/</code>）</td><td><span class="badge done">~95%</span></td></tr>
+      <tr><td><code>frontend</code></td><td>廟方管理後台（儀表板、圖表）</td><td><span class="badge done">成熟</span></td></tr>
+      <tr><td><code>sgbd</code></td><td>廟宇官網管理 CMS（公告、活動、點燈、進香）</td><td><span class="badge done">完整</span></td></tr>
+      <tr><td><code>user-web</code></td><td>信眾端 App</td><td><span class="badge wip">Mock 未串接後端</span></td></tr>
+      <tr><td><code>liff</code></td><td>LINE LIFF（活動報名）</td><td><span class="badge wip">單廟 VITE_TEMPLE_ID=1</span></td></tr>
+    </table>
+
+    <h3>TEP 自己的認證（注意：跟 Web App 是另一套）</h3>
+    <div class="prose"><p>JWT 雙 token（1 小時 access + 7 天 refresh，<code>refresh_tokens</code> 表可撤銷）。三種帳號表 + 三個守門裝飾器：</p></div>
+    <table>
+      <tr><th>裝飾器</th><th>誰能過</th></tr>
+      <tr><td><code>@token_required</code></td><td>任何登入者</td></tr>
+      <tr><td><code>@temple_admin_token_required</code></td><td>廟方管理員</td></tr>
+      <tr><td><code>@super_admin_token_required</code></td><td>系統管理員</td></tr>
+    </table>
+
+    <h3>整合合約 · Web App / LINE Gateway 怎麼接 TEP</h3>
+    <div class="prose"><p>關鍵是 TEP 開了一組<strong>免登入 public 端點</strong>，直接吃 <code>lineUserId</code>，<strong>不需要先綁定帳號</strong>——這就是 Stage 4 當初的重大發現（報名不卡在 UID 綁定）。</p></div>
+    <table>
+      <tr><th>Method</th><th>Path</th><th>用途</th></tr>
+      <tr><td>GET</td><td><code>/api/public/temples/{templeId}/events</code></td><td>查某廟的活動</td></tr>
+      <tr><td>GET</td><td><code>/api/public/events/{eventId}</code></td><td>活動詳情</td></tr>
+      <tr><td>POST</td><td><code>/api/public/events/{eventId}/register</code></td><td><strong>報名（body 帶 name/phone/email/peopleCount/lineUserId）</strong></td></tr>
+      <tr><td>GET</td><td><code>/api/public/registrations?line_uid={uid}</code></td><td>查某 LINE 使用者的報名</td></tr>
+      <tr><td>PUT</td><td><code>/api/public/registrations/{id}/cancel</code></td><td>取消報名</td></tr>
+      <tr><td>POST</td><td><code>/api/line/webhook</code></td><td>TEP 內建的 LINE webhook（簽章驗證）</td></tr>
+    </table>
+    <div class="card warn">
+      <div class="card-title">釐清 · TEP 內建 LINE vs Max 的 LINE Gateway</div>
+      <div class="card-body">
+        TEP 自帶 <code>line_users</code> 表、<code>/api/line/webhook</code>、一個 LIFF app。新架構下<strong>由 Max 的 LINE Gateway 當統一 LINE 窗口</strong>（招牌 + 推播），TEP 內建的 LINE 功能逐步讓位，避免兩套 LINE webhook / 兩個官方帳號打架。報名資料的「家」仍是 TEP（透過上面 public API 寫入）。
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 09 ====== -->
+  <section id="s9">
+    <h2 class="section-title"><span class="section-num">09</span>LINE Gateway 詳解</h2>
+    <div class="prose"><p>Max 全包。職責收斂成三件：<strong>招牌（Rich Menu）+ 推播（Flex/文字/Location/Sticker）+ Webhook 接收</strong>。不做訂閱卡片、不做個人查詢 UI——那些是 Web App 的工作。</p></div>
+
+    <h3>已完成能力</h3>
+    <ul class="checklist">
+      <li class="done">Webhook 接收 + X-Line-Signature 簽章驗證</li>
+      <li class="done"><code>line_users</code> upsert + follow / unfollow 軟更新</li>
+      <li class="done">2×2 Rich Menu 招牌（米色系，四格 deep link 跳 Web App）</li>
+      <li class="done">訊息測試包：Flex Carousel / Quick Reply / Loading / Location / Sticker / Welcome 流程</li>
+      <li class="done"><code>POST /admin/test/send</code>（X-Admin-Key 驗證）手動觸發六種測試訊息</li>
+      <li class="done">follow event → 歡迎序列；text event → 關鍵字 routing（無命中沉默）</li>
+      <li class="done">TEP Client 骨架（retry / singleton / 6 endpoints）</li>
+    </ul>
+
+    <div class="card info">
+      <div class="card-title">技術註記</div>
+      <div class="card-body">
+        line-bot-sdk 3.5.0 <strong>不含</strong> <code>ShowLoadingAnimationRequest</code> → Loading 動畫用 raw HTTP 打 <code>POST /v2/bot/chat/loading/start</code>。<br>
+        Rich Menu URL 寫死在 LINE 平台、換要重跑 <code>scripts/setup_rich_menu.py --confirm</code>；目前指向 ngrok dev 網址，正式應換 Zeabur。
+      </div>
+    </div>
+
+    <h3>三層資安</h3>
+    <table>
+      <tr><th>層</th><th>機制</th></tr>
+      <tr><td>對外</td><td>X-Line-Signature 驗 webhook 真偽</td></tr>
+      <tr><td>內部</td><td>X-Gateway-Key / X-Admin-Key 驗推播觸發合法性</td></tr>
+      <tr><td>前端</td><td>開發階段 X-Line-Uid header，正式版改 LIFF access token + LINE 官方驗證</td></tr>
+    </table>
+  </section>
+
+  <!-- ====== 10 ====== -->
+  <section id="s10">
+    <h2 class="section-title"><span class="section-num">10</span>資料模型（三系統）</h2>
+
+    <h3>① Web App（MySQL <code>yuanyin</code> · templeuser）</h3>
+    <div class="diagram"><span class="d-accent">members</span>（會員 · Max 擴充過）
+  ├── id, display_name(預設「訪客」), avatar_url
+  ├── line_user_id (UK, <span class="d-amber">nullable</span>, idx)   ← LINE 登入
+  ├── google_sub  (UK, <span class="d-amber">nullable</span>, idx)   ← Google 登入（Max 加）
+  ├── email       (UK, <span class="d-amber">nullable</span>, idx)   ← 帳號合併用（Max 加）
+  ├── provider    (NOT NULL, 預設 demo) ← {line, google, demo}
+  ├── push_enabled (NOT NULL, 預設 true) ← 推播開關（Max 加）
+  └── created_at, last_seen_at
+  <span class="d-dim">註：DB 無 CHECK 約束；app 邏輯保證 line_user_id 一定有值（訪客用 demo_ 前綴）</span>
+
+<span class="d-accent">wishes</span>（許願 · 學長做）   member_id(FK), temple..., status, remind_at
+<span class="d-accent">favorites</span>（收藏廟宇 · 學長做） member_id(FK), temple  <span class="d-dim">複合唯一</span>
+<span class="d-accent">temples / deities / guides / needs</span>（內容 · 學長做）
+<span class="d-accent">analytics_events</span>（行為追蹤 · IP 經 SHA256+salt 雜湊不存原始 IP）</div>
+
+    <h3>② LINE Gateway（PostgreSQL · line-gateway）</h3>
+    <div class="diagram"><span class="d-green">line_users</span>   line_uid(UK), display_name, follow_status ...
+<span class="d-green">action_logs</span>  操作流水（稽核 / debug，JSONB payload）
+<span class="d-green">push_logs</span>    推播紀錄（flex_payload, status, sent_at）
+<span class="d-dim">subscriptions：已決定改用 Web App 的 favorites，不在這裡存</span></div>
+
+    <h3>③ TEP（MySQL <code>amulet_system_v2</code> · 30+ 表，擷取關鍵）</h3>
+    <div class="diagram"><span class="d-amber">public_users</span> / temple_admin_users / super_admin_users（三種帳號）
+<span class="d-amber">temples</span>          廟宇（座標、打卡半徑、main_deity ...）
+<span class="d-amber">temple_events</span>    活動（title, start/end, capacity, status）
+<span class="d-amber">event_registrations</span> 報名（<span class="d-green">line_user_id nullable idx</span>, user_id nullable）
+<span class="d-amber">line_users</span>       TEP 自己的 LINE 使用者表
+amulets / checkins / energy_logs   打卡集點
+products / redemptions / addresses 兌換電商
+lamp_types / lamp_applications     點燈
+notifications / temple_notifications ... 通知（5 表）</div>
+
+    <div class="card warn">
+      <div class="card-title">注意 · 訂閱/收藏資料的歸屬</div>
+      <div class="card-body">
+        新架構下「關注廟宇」用 Web App 的 <code>favorites</code> 表。LINE Gateway 推播時，向 Web App 查「廟 X 有哪些關注者的 LINE UID」（規劃中的內部 API），自己不存訂閱關係。
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 11 ====== -->
+  <section id="s11">
+    <h2 class="section-title"><span class="section-num">11</span>分工</h2>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Max（你）</div>
+        <div class="card-body">
+          <strong>LINE Gateway 全包</strong>：招牌、訊息、推播、Webhook<br><br>
+          <strong>Web App 後端 · 通訊與整合層</strong>：帳號系統（LINE/Google Login）、members 模組、訂閱、報名 API、TEP 對接<br><br>
+          <strong>策略</strong>：做「不會變的骨架」——資料庫、API、驗證、邏輯。不碰會被打掉的 UI。
+        </div>
+      </div>
+      <div class="card info">
+        <div class="card-title">長諺（學長）</div>
+        <div class="card-body">
+          <strong>TEP 維護</strong>：廟方營運平台、活動/報名資料<br><br>
+          <strong>Web App 主場</strong>：Next.js 前端、UI、廟宇/神明/指南/需求、AI 祈禱文、地圖、admin 後台<br><br>
+          <strong>主導</strong>：Web App 的技術方向與設計。
+        </div>
+      </div>
+    </div>
+
+    <h3>共同負責</h3>
+    <ul class="checklist">
+      <li>API 介面合約（Max 提供 API、學長的頁面 fetch 呼叫）</li>
+      <li>Deep Link 規格（LINE 卡片按鈕跳 Web App 哪個 URL）</li>
+      <li>端到端報名流程（TEP 開活動 → Web App → LINE 推播 → 報名 → TEP 看到）</li>
+      <li>Zeabur 部署</li>
+    </ul>
+
+    <h3>Git Repo</h3>
+    <table>
+      <tr><th>Repo</th><th>Owner</th><th>內容</th></tr>
+      <tr><td><code>changyen26/templeuser</code></td><td>長諺</td><td>Web App（Next.js + Flask + MySQL）</td></tr>
+      <tr><td><code>Shih-Wei-Ciou/line-gateway</code></td><td>Max</td><td>LINE Gateway（Flask）</td></tr>
+      <tr><td>TEP（tep-master）</td><td>學長</td><td>宮廟後台平台（Flask + React19 ×4 + MySQL）</td></tr>
+    </table>
+    <div class="card info">
+      <div class="card-title">協作方式</div>
+      <div class="card-body">
+        Max 在 templeuser 開 branch（如 <code>feat/line-auth</code>）做帳號系統，用 PR 合回 main。兩人互相加為 collaborator。GitHub + Zeabur 雲端協作，不需共用 server。
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== 12 ====== -->
+  <section id="s12">
+    <h2 class="section-title"><span class="section-num">12</span>目前進度</h2>
+
+    <h3>Web App 帳號系統（Max · feat/line-auth branch）</h3>
+    <ul class="checklist">
+      <li class="done">members 表多 OAuth 欄位（email / google_sub / push_enabled、line_user_id 改可空）</li>
+      <li class="done">LINE Login OAuth（完整流程、端到端測試通過）</li>
+      <li class="done">Google Login OAuth（完整流程實作）</li>
+      <li class="done">帳號合併 C 方案骨架（bind 端點）</li>
+      <li class="done">前端兩顆白底品牌登入按鈕（LINE / Google）</li>
+      <li class="done">commit e73c1c0 + push 到 GitHub（feat/line-auth）</li>
+      <li class="wip">Google Login 端到端實測（待 Google Console 白名單 + 填 .env 真值）</li>
+      <li>開 PR 合回 main（待週三跟學長 review）</li>
+    </ul>
+
+    <h3>LINE Gateway（Max）</h3>
+    <ul class="checklist">
+      <li class="done">Webhook + 簽章驗證 + follow/unfollow</li>
+      <li class="done">2×2 Rich Menu 招牌（跳 Web App）</li>
+      <li class="done">Flex 訊息測試包 + 關鍵字 router + Admin endpoint</li>
+      <li class="done">TEP Client 骨架</li>
+      <li class="done">程式碼上 GitHub（之前 .git 在子資料夾、從未真正推上）</li>
+      <li>Push Service（推播內部 API + Multicast）</li>
+      <li>Zeabur 部署</li>
+    </ul>
+
+    <h3>Web App 主場（學長）</h3>
+    <ul class="checklist">
+      <li class="done">Next.js 14 + Tailwind + 廟宇/神明/指南/需求頁</li>
+      <li class="done">Google Maps 地圖、AI 祈禱文、Geolocation 附近廟</li>
+      <li class="done">members/wishes/favorites 模組（後端）</li>
+      <li class="done">admin 後台 + 雙層認證 + analytics 行為追蹤</li>
+    </ul>
+  </section>
+
+  <!-- ====== 13 ====== -->
+  <section id="s13">
+    <h2 class="section-title"><span class="section-num">13</span>接下來要做</h2>
+    <table>
+      <tr><th>優先</th><th>項目</th><th>說明</th></tr>
+      <tr><td><span class="badge wip">NEXT</span></td><td>Google Login 實測 + 開 PR</td><td>填 Google 真值 → 實測 → feat/line-auth 合回 main</td></tr>
+      <tr><td><span class="badge todo">P1</span></td><td>訂閱系統</td><td>用學長的 favorites = 訂閱；給 LINE Gateway 查訂閱者的內部 API</td></tr>
+      <tr><td><span class="badge todo">P1</span></td><td>LINE Gateway ↔ Web App 推播串接</td><td>Web App 觸發 → LINE Gateway 推 Flex 卡片給訂閱者</td></tr>
+      <tr><td><span class="badge todo">P2</span></td><td>報名系統</td><td>Web App 報名 → 打 TEP <code>/api/public/events/{id}/register</code> → LINE 推確認</td></tr>
+      <tr><td><span class="badge todo">P2</span></td><td>端到端流程打通</td><td>TEP 開活動 → 推播 → 點開 → 報名 → TEP 看到</td></tr>
+      <tr><td><span class="badge todo">P3</span></td><td>Zeabur 統一部署</td><td>三服務 + 共用 DB</td></tr>
+      <tr><td><span class="badge todo">P3</span></td><td>line-gateway 改 MySQL</td><td>統一資料庫生態（目前仍 PostgreSQL）</td></tr>
+    </table>
+  </section>
+
+  <!-- ====== 14 ====== -->
+  <section id="s14">
+    <h2 class="section-title"><span class="section-num">14</span>不做的事（拒絕清單）</h2>
+    <div class="prose"><p>新架構下更新過的拒絕清單。注意：舊清單裡的「不做 Next.js / Docker / Web App」已經作廢。</p></div>
+
+    <h4>系統層級</h4>
+    <ul class="checklist">
+      <li>重建 TEP 廟方後台（學長維護，不重工）</li>
+      <li>信眾獨立原生 App（用 Web App + LINE 就夠）</li>
+    </ul>
+    <h4>技術層級</h4>
+    <ul class="checklist">
+      <li>LINE Pay 金流（V2 再說）</li>
+      <li>多 OA（一個官方帳號就好）</li>
+    </ul>
+    <h4>設計層級</h4>
+    <ul class="checklist">
+      <li>遊戲化機制（積分、徽章、稀有度）——違反核心信念</li>
+      <li>過度動畫、過度設計</li>
+      <li>在 MVP 階段做精美 UI（等設計師交稿）</li>
+    </ul>
+
+    <div class="card ok">
+      <div class="card-title">新架構「現在要做」（推翻舊拒絕清單）</div>
+      <div class="card-body">
+        ✓ Next.js Web App　✓ Docker　✓ 信眾 Web App　✓ React/RSC　✓ Google Maps<br>
+        這些在舊架構是被拒絕的，新架構全部擁抱。
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    緣引拜拜通 · 現況架構總綱 v4 · 2026-06-10<br>
+    已對照 templeuser / line-gateway / tep-master 實際 code 校正 · 取代 md/ 內所有舊架構文件<br>
+    開新對話 / 新人加入看這份
+  </footer>
+
+</div>
+</body>
+</html>

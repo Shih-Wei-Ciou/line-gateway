@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google 登入 · 實測執行與判讀</title>
+<style>
+:root{
+  --l0:#f3eee2; --l1:#fffdf8; --l2:#f8f2e6;
+  --ink:#2a2620; --ink-soft:#6b6457; --ink-faint:#9a9387;
+  --line:#e3dcc9; --line-strong:#cdc3ac;
+  --accent:#b3552b; --accent-soft:#e8d3c4;
+  --good:#4d7a4d; --warn:#a87422; --bad:#a23a2a;
+  --serif:"Iowan Old Style","Apple Garamond",Cambria,"Noto Serif TC","Songti TC",serif;
+  --sans:-apple-system,"Segoe UI Variable","Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:"Cascadia Code","SF Mono",Consolas,"Roboto Mono",monospace;
+  --sp-1:8px; --sp-2:16px; --sp-3:24px; --sp-4:32px; --sp-5:48px; --sp-6:72px;
+  --radius:10px;
+  --shadow:0 1px 2px rgba(60,50,30,.04), 0 6px 18px rgba(60,50,30,.06);
+  --nav-w:280px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0; background:var(--l0); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.75; -webkit-font-smoothing:antialiased;}
+.num{font-variant-numeric:tabular-nums; font-family:var(--mono)}
+a{color:var(--accent); text-underline-offset:3px}
+
+.layout{display:flex; min-height:100vh}
+.nav{width:var(--nav-w); flex:0 0 var(--nav-w); position:sticky; top:0; align-self:flex-start;
+  height:100vh; overflow-y:auto; padding:var(--sp-4) var(--sp-2) var(--sp-4) var(--sp-3);
+  background:var(--l0); border-right:1px solid var(--line);}
+.nav-brand{font-family:var(--serif); font-size:13px; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:var(--sp-1);}
+.nav-title{font-family:var(--serif); font-size:21px; line-height:1.25; font-weight:600; margin-bottom:var(--sp-4);}
+.nav-title em{color:var(--accent); font-style:italic}
+.toc{list-style:none; margin:0; padding:0; counter-reset:chap}
+.toc-item > .toc-link{display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:7px;
+  cursor:pointer; color:var(--ink); text-decoration:none; font-size:14.5px; transition:background .15s;}
+.toc-link:hover{background:var(--accent-soft)}
+.toc-link .rn{counter-increment:chap; font-family:var(--mono); font-size:11px; color:var(--ink-faint); min-width:22px;}
+.toc-link .rn::before{content:counter(chap,upper-roman) "."}
+.toc-link .label{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.toc-link .arrow{color:var(--ink-faint); font-size:11px; transition:transform .2s; width:12px; text-align:center;}
+.toc-item.open > .toc-link .arrow{transform:rotate(90deg)}
+.toc-item.active > .toc-link{background:var(--accent-soft); font-weight:600;}
+.toc-item.active > .toc-link .rn{color:var(--accent)}
+.toc-sub{list-style:none; margin:2px 0 4px; padding:0 0 0 30px; max-height:0; overflow:hidden; transition:max-height .25s ease;}
+.toc-item.open .toc-sub{max-height:500px}
+.toc-sub a{display:block; padding:5px 10px; border-radius:6px; color:var(--ink-soft);
+  text-decoration:none; font-size:13px; border-left:1px solid var(--line);}
+.toc-sub a:hover{background:var(--accent-soft); color:var(--ink)}
+.toc-sub a.active{color:var(--accent); border-left-color:var(--accent); font-weight:600}
+.main{flex:1; min-width:0; padding:var(--sp-5) var(--sp-6); max-width:1080px}
+.menu-btn{display:none; position:fixed; top:14px; left:14px; z-index:50; width:42px; height:42px;
+  border-radius:9px; border:1px solid var(--line); background:var(--l1); color:var(--ink);
+  font-size:18px; cursor:pointer; box-shadow:var(--shadow);}
+
+.section{background:var(--l1); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:var(--sp-5) var(--sp-5); margin-bottom:var(--sp-4); scroll-margin-top:24px;}
+.eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:var(--sp-1);}
+.section h2{font-family:var(--serif); font-size:34px; line-height:1.15; font-weight:600; margin:0 0 var(--sp-2); letter-spacing:-.01em;}
+.section h2 em{color:var(--accent); font-style:italic}
+.section h2 + .rule{width:54px; height:3px; background:var(--accent); border:none; margin:0 0 var(--sp-3);}
+.section h3{font-family:var(--serif); font-size:20px; font-weight:600; margin:var(--sp-4) 0 var(--sp-2); scroll-margin-top:24px;}
+.section h3::before{content:"§ "; color:var(--accent); font-weight:400}
+.section p{margin:0 0 var(--sp-2); max-width:72ch}
+.lead{color:var(--ink-soft); font-size:17px}
+
+.lede{font-family:var(--serif); font-style:italic; font-size:19px; line-height:1.7; color:var(--ink);
+  border-left:3px solid var(--accent); padding:var(--sp-1) 0 var(--sp-1) var(--sp-3); margin:var(--sp-3) 0;}
+
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:var(--sp-2); margin:var(--sp-3) 0;}
+.kpi{background:var(--l2); border:1px solid var(--line); border-radius:var(--radius); padding:var(--sp-3);}
+.kpi.win{border-color:var(--accent); border-top:3px solid var(--accent)}
+.kpi .k-label{font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:var(--sp-1);}
+.kpi .k-num{font-family:var(--serif); font-size:34px; line-height:1; font-weight:600; font-variant-numeric:tabular-nums;}
+.kpi.win .k-num{color:var(--accent)}
+.kpi .k-sub{font-size:13px; color:var(--ink-soft); margin-top:var(--sp-1)}
+
+.finding{background:var(--l2); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; padding:var(--sp-3) var(--sp-3); margin:var(--sp-2) 0;}
+.finding .f-tag{font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--accent); text-transform:uppercase; margin-bottom:6px;}
+.finding p{margin:0 0 var(--sp-1)}
+.finding p:last-child{margin:0}
+.finding.good{border-left-color:var(--good)} .finding.good .f-tag{color:var(--good)}
+.finding.warn{border-left-color:var(--warn)} .finding.warn .f-tag{color:var(--warn)}
+.finding.bad{border-left-color:var(--bad)}   .finding.bad .f-tag{color:var(--bad)}
+
+.table-card{background:var(--l2); border:1px solid var(--line); border-radius:var(--radius); padding:var(--sp-3); margin:var(--sp-3) 0; overflow-x:auto;}
+table.sci{width:100%; border-collapse:collapse; font-size:14px}
+table.sci thead th{font-family:var(--sans); font-weight:600; font-size:12.5px; color:var(--ink-soft);
+  text-align:left; padding:8px 14px; border-bottom:1px solid var(--line-strong);}
+table.sci tbody td{padding:9px 14px; text-align:left; border-bottom:1px solid var(--line); font-size:14px; vertical-align:top;}
+table.sci tbody tr:last-child td{border-bottom:2px solid var(--line-strong)}
+table.sci tbody td:first-child{font-weight:600}
+.pill{display:inline-block; padding:1px 9px; border-radius:11px; font-size:12px; font-family:var(--sans); font-weight:600; white-space:nowrap}
+.pill.good{background:#e3efe1; color:var(--good)}
+.pill.warn{background:#f3e8cf; color:var(--warn)}
+.pill.bad{background:#f3dcd8; color:var(--bad)}
+.caption{font-size:12.5px; color:var(--ink-faint); margin-top:var(--sp-1)}
+
+code{font-family:var(--mono); font-size:0.88em; background:var(--l2); padding:2px 6px; border-radius:4px; color:var(--accent); border:1px solid var(--line);}
+pre{background:#2a2620; color:#f3eee2; border-radius:8px; padding:14px 18px; overflow-x:auto;
+  font-family:var(--mono); font-size:13px; line-height:1.7; margin:var(--sp-2) 0;}
+pre code{background:none; border:none; padding:0; color:#f3eee2}
+pre .c{color:#9a9387}
+
+.callout{border-left:3px solid var(--ink-soft); background:var(--l2); padding:var(--sp-2) var(--sp-3);
+  border-radius:0 8px 8px 0; margin:var(--sp-2) 0; font-size:14.5px; color:var(--ink-soft);}
+.callout strong{color:var(--ink)}
+.callout.accent{border-left-color:var(--accent)}
+
+/* 進度條 (你在哪一步) */
+.progress{display:flex; gap:var(--sp-1); margin:var(--sp-3) 0; flex-wrap:wrap}
+.pstep{flex:1; min-width:120px; background:var(--l2); border:1px solid var(--line); border-radius:8px; padding:10px 14px; font-size:13px;}
+.pstep .pl{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint)}
+.pstep .pn{font-weight:600; color:var(--ink-soft)}
+.pstep.done{border-color:var(--good)} .pstep.done .pl{color:var(--good)} .pstep.done .pn::after{content:" ✓"; color:var(--good)}
+.pstep.now{border-color:var(--accent); border-top:3px solid var(--accent)} .pstep.now .pl{color:var(--accent)} .pstep.now .pn{color:var(--ink)}
+
+@media (max-width:900px){
+  .menu-btn{display:block}
+  .nav{position:fixed; left:0; top:0; z-index:40; transform:translateX(-100%); transition:transform .25s; box-shadow:var(--shadow)}
+  .nav.open{transform:translateX(0)}
+  .main{padding:var(--sp-5) var(--sp-3); padding-top:64px}
+  .section{padding:var(--sp-4) var(--sp-3)}
+  .section h2{font-size:27px}
+}
+@media print{
+  .nav,.menu-btn{display:none}
+  body{background:#fff}
+  .section{box-shadow:none; border-color:#ccc; break-inside:avoid}
+  .main{max-width:none; padding:0}
+}
+</style>
+</head>
+
+<body>
+<button class="menu-btn" id="menuBtn" aria-label="目錄">☰</button>
+
+<div class="layout">
+
+  <nav class="nav" id="nav">
+    <div class="nav-brand">templeuser · GOOGLE LOGIN</div>
+    <div class="nav-title">Google 登入<br><em>實測執行</em>與判讀</div>
+    <ul class="toc" id="toc"></ul>
+  </nav>
+
+  <main class="main" id="main">
+
+    <!-- ============ 封面 ============ -->
+    <section class="section" id="cover" data-title="你在這裡">
+      <div class="eyebrow">TEST RUN · 2026-06-10</div>
+      <h2>Google 登入 <em>實測執行</em> 與判讀</h2>
+      <hr class="rule">
+      <p class="lead">後端、前端都確認正常了。剩下就是「真的去點一次登入」+「看懂結果」。這一步只要 3 個動作、約 1 分鐘，但判讀要看仔細 —— 大部分問題都藏在網址列那一行。</p>
+
+      <div class="progress">
+        <div class="pstep done"><div class="pl">Step 01</div><div class="pn">後端啟動</div></div>
+        <div class="pstep done"><div class="pl">Step 02</div><div class="pn">前端啟動</div></div>
+        <div class="pstep now"><div class="pl">Step 03–05</div><div class="pn">實際登入 + 判讀</div></div>
+        <div class="pstep"><div class="pl">Next</div><div class="pn">開 PR 合回 main</div></div>
+      </div>
+    </section>
+
+    <!-- ============ 開始前 ============ -->
+    <section class="section" id="precheck" data-title="開始前 · port 對齊">
+      <h2>開始前 · 只要確認一件事</h2>
+      <hr class="rule">
+      <p>登入流程裡最容易壞、又最不明顯的，就是 <strong>port 沒對齊</strong>。先花 10 秒確認：</p>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>項目</th><th>值</th><th>要相等</th></tr></thead>
+          <tbody>
+            <tr><td>前端 npm run dev 印出的網址</td><td><code>http://localhost:3000</code>（看你實際的）</td><td rowspan="2" style="vertical-align:middle"><span class="pill warn">兩者 port 必須一樣</span></td></tr>
+            <tr><td><code>backend/.env</code> 的 <code>WEBAPP_URL</code></td><td><code>http://localhost:3000</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout accent">
+        <strong>為什麼重要：</strong> 登入成功後，後端會把你導回 <code>WEBAPP_URL</code>。如果它寫 3001、你前端開在 3000，就會「登入明明成功，卻跳到一個打不開的頁面」。對不上的話，改 <code>.env</code> 的 <code>WEBAPP_URL</code> 後<strong>重啟後端</strong>再測。
+      </div>
+    </section>
+
+    <!-- ============ 實際登入 ============ -->
+    <section class="section" id="dologin" data-title="實際登入 3 動作">
+      <h2>實際登入 · 三個動作</h2>
+      <hr class="rule">
+
+      <div class="finding">
+        <div class="f-tag">動作 1 · 開無痕視窗進站</div>
+        <p>按 <code>Ctrl+Shift+N</code> 開無痕 → 網址列輸入你前端的位址（如 <code>http://localhost:3000</code>）→ 點進「我的」頁。</p>
+        <p><strong>務必無痕。</strong> 一般視窗的瀏覽器擴充（趨勢科技 URL 掃描）會搶先讀 callback、吃掉 OAuth 的 state cookie，害你卡 <code>invalid_state</code>。這是你 LINE 登入時踩過的同一個雷。</p>
+      </div>
+
+      <div class="finding">
+        <div class="f-tag">動作 2 · 按「使用 Google 登入」</div>
+        <p>頁面會跳轉到 Google 的授權畫面（網址變成 <code>accounts.google.com/...</code>）。</p>
+      </div>
+
+      <div class="finding">
+        <div class="f-tag">動作 3 · 選帳號 → 允許</div>
+        <p>選你那個有加進 Test users 的 Gmail → 按「繼續 / 允許」。然後<strong>盯著網址列看它導回哪裡</strong>（下一章就是判讀那串網址）。</p>
+      </div>
+    </section>
+
+    <!-- ============ 判讀 ============ -->
+    <section class="section" id="read" data-title="判讀結果">
+      <h2>判讀 · 網址列會告訴你一切</h2>
+      <hr class="rule">
+      <p>Google 把你導回前端時，網址後面會掛一段參數。<strong>那一段就是成績單。</strong>對照下表：</p>
+
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>導回的網址長這樣</th><th>意思</th><th>下一步</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>?login_success=true&amp;token=eyJ...</code></td>
+              <td>登入成功，後端發了 JWT</td>
+              <td><span class="pill good">往下做驗證</span></td>
+            </tr>
+            <tr>
+              <td><code>?login_error=invalid_state</code></td>
+              <td>state cookie 被擋（多半是擴充）</td>
+              <td><span class="pill warn">換無痕重來</span></td>
+            </tr>
+            <tr>
+              <td><code>?login_error=server_error</code></td>
+              <td>後端換 token 時出錯（常是容器連不到 Google）</td>
+              <td><span class="pill bad">看後端 log / 重啟 Docker</span></td>
+            </tr>
+            <tr>
+              <td><code>?login_action=merge&amp;provider=line</code></td>
+              <td>這個 email 已經用 LINE 註冊過 → 觸發帳號合併 C 方案</td>
+              <td><span class="pill warn">正常分支，見下方說明</span></td>
+            </tr>
+            <tr>
+              <td>停在 Google 頁，紅字 <code>redirect_uri_mismatch</code></td>
+              <td>Console 的 redirect URI 跟 .env 不一致</td>
+              <td><span class="pill bad">對齊兩邊網址</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="caption">表 1 · 看到哪一行，就照「下一步」那欄做。</div>
+      </div>
+
+      <div class="callout">
+        <strong>關於 <code>merge</code> 那行：</strong> 如果你之前已經用「同一個 email 的 LINE」登入過，現在改用 Google，系統不會亂合併，而是導到合併頁問你要不要綁定 —— 這是<strong>正確行為，不是錯誤</strong>。想測「純新 Google 帳號」的話，用一個沒登入過的 Gmail。
+      </div>
+    </section>
+
+    <!-- ============ 確認成功 ============ -->
+    <section class="section" id="verify" data-title="確認真的成功">
+      <h2>確認 · 三個成功訊號</h2>
+      <hr class="rule">
+      <p>看到 <code>login_success=true</code> 還不算完，要這三個都對才是端到端通過：</p>
+
+      <div class="kpi-grid">
+        <div class="kpi win"><div class="k-label">訊號 1 · 網址</div><div class="k-num" style="font-size:22px">login_success</div><div class="k-sub">網址列出現 <code>=true&amp;token=...</code></div></div>
+        <div class="kpi win"><div class="k-label">訊號 2 · 畫面</div><div class="k-num" style="font-size:22px">顯示名字</div><div class="k-sub">「我的」頁出現 Google 名字 + 頭像</div></div>
+        <div class="kpi win"><div class="k-label">訊號 3 · 持久</div><div class="k-num" style="font-size:22px">重整還在</div><div class="k-sub">按 F5 後仍是登入狀態</div></div>
+      </div>
+
+      <h3 id="verify-devtools">用 DevTools 再確認一次（可選但推薦）</h3>
+      <p>按 <code>F12</code> 開 DevTools → <strong>Application</strong> 分頁 → 左邊 <strong>Local Storage</strong> → 點你的網域，找這個 key：</p>
+      <pre><code>lyz_member_token   <span class="c">// 有值 = token 真的存下來了</span></code></pre>
+      <p>有這個 key、值是一長串 <code>eyJ...</code>，就代表前端確實接到並保存了 token，重整後才能維持登入。</p>
+
+      <div class="finding good">
+        <div class="f-tag">三個訊號都對 = 通過</div>
+        <p>恭喜，Google 登入端到端正常。加上先前已通的 LINE 登入，<strong>兩條 OAuth 都打通了</strong> —— 可以收尾進到下一步：開 PR。</p>
+      </div>
+    </section>
+
+    <!-- ============ 下一步 ============ -->
+    <section class="section" id="next" data-title="通過後 · 下一步">
+      <h2>通過之後 · 下一步是開 PR</h2>
+      <hr class="rule">
+      <p>Google 測通，這個功能就完整了。接著是 roadmap 的 <strong>NEXT</strong>：把 <code>feat/line-auth</code> 開 PR 合回 main，給學長 review。</p>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>項目</th><th>狀態</th></tr></thead>
+          <tbody>
+            <tr><td>LINE Login 端到端</td><td><span class="pill good">已通過</span></td></tr>
+            <tr><td>Google Login 端到端</td><td><span class="pill good">本次測通</span></td></tr>
+            <tr><td>程式碼 commit + push</td><td><span class="pill good">e73c1c0 已 push</span></td></tr>
+            <tr><td>開 PR 合回 main</td><td><span class="pill warn">下一步</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout accent">
+        <strong>準備好開 PR 時跟我說，</strong>我可以幫你把 PR 標題、描述（這次做了什麼、怎麼測的）整理好，再用 <code>gh</code> 開到 <code>changyen26/templeuser</code>。
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  const main = document.getElementById('main');
+  const toc  = document.getElementById('toc');
+  const sections = [...main.querySelectorAll('.section')];
+
+  sections.forEach(sec=>{
+    const id = sec.id;
+    const title = sec.dataset.title || sec.querySelector('h2')?.textContent || id;
+    const subs = [...sec.querySelectorAll('h3[id]')];
+    const li = document.createElement('li');
+    li.className = 'toc-item'; li.dataset.target = id;
+    const link = document.createElement('a');
+    link.className = 'toc-link'; link.href = '#'+id;
+    link.innerHTML = `<span class="rn"></span><span class="label">${title}</span>`
+                   + (subs.length ? `<span class="arrow">▸</span>` : `<span class="arrow"></span>`);
+    li.appendChild(link);
+    if(subs.length){
+      const ul = document.createElement('ul'); ul.className = 'toc-sub';
+      subs.forEach(h=>{
+        const a = document.createElement('a');
+        a.href = '#'+h.id; a.dataset.target = h.id;
+        a.textContent = h.textContent.replace(/^§\s*/,'');
+        ul.appendChild(a);
+      });
+      li.appendChild(ul);
+    }
+    toc.appendChild(li);
+    link.addEventListener('click', e=>{
+      e.preventDefault();
+      document.getElementById(id).scrollIntoView({behavior:'smooth'});
+      if(subs.length) li.classList.toggle('open');
+      closeNavMobile();
+    });
+  });
+
+  const items = [...toc.querySelectorAll('.toc-item')];
+  const byId = Object.fromEntries(items.map(i=>[i.dataset.target,i]));
+  const spy = new IntersectionObserver(entries=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        items.forEach(i=>i.classList.remove('active'));
+        const it = byId[en.target.id];
+        if(it){ it.classList.add('active'); it.classList.add('open'); }
+      }
+    });
+  }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+  sections.forEach(s=>spy.observe(s));
+
+  const nav = document.getElementById('nav');
+  const menuBtn = document.getElementById('menuBtn');
+  menuBtn.addEventListener('click', ()=>nav.classList.toggle('open'));
+  function closeNavMobile(){ if(window.innerWidth<=900) nav.classList.remove('open'); }
+})();
+</script>
+</body>
+</html>

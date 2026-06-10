@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LINE Login OAuth · 驗證指南 + 系統解說</title>
+<style>
+  :root {
+    --bg: #1a1612; --bg-elevated: #221d18; --bg-card: #2a2420;
+    --border: #3a322c; --text: #e8e0d4; --text-muted: #9a9088; --text-dim: #6a6058;
+    --accent: #c9a961; --accent-soft: #c9a96133;
+    --green: #8fbc6c; --amber: #d4a04c; --red: #c97a6b; --blue: #7ba3c4;
+    --mono: "JetBrains Mono","Consolas",monospace;
+    --serif: "Noto Serif TC","PingFang TC",serif;
+    --sans: "Noto Sans TC","Microsoft JhengHei",sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text); font-family: var(--sans);
+    line-height: 1.8; padding: 48px 24px; min-height: 100vh;
+  }
+  .container { max-width: 880px; margin: 0 auto; }
+  .header { border-bottom: 1px solid var(--border); padding-bottom: 32px; margin-bottom: 48px; }
+  .header-tag {
+    display: inline-block; font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent);
+    padding: 4px 10px; border: 1px solid var(--accent); border-radius: 2px; margin-bottom: 16px;
+  }
+  .header h1 { font-family: var(--serif); font-weight: 500; font-size: 36px; margin-bottom: 12px; }
+  .header-sub { font-family: var(--serif); font-style: italic; color: var(--text-muted); font-size: 16px; }
+  section { margin-bottom: 56px; }
+  .section-title {
+    font-family: var(--serif); font-size: 24px; font-weight: 500; margin-bottom: 24px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::before { content: ""; width: 8px; height: 8px; background: var(--accent); transform: rotate(45px); }
+  .prose { color: var(--text-muted); font-size: 15px; }
+  .prose p + p { margin-top: 12px; }
+  .prose strong { color: var(--text); }
+  code {
+    font-family: var(--mono); font-size: 0.9em; background: var(--bg-elevated);
+    padding: 2px 6px; border-radius: 2px; color: var(--accent);
+  }
+  pre {
+    background: #0f0c0a; border: 1px solid var(--border); border-radius: 4px;
+    padding: 16px 20px; overflow-x: auto; font-family: var(--mono);
+    font-size: 13px; line-height: 1.6; color: var(--text); margin: 16px 0;
+  }
+  pre code { background: none; padding: 0; color: var(--text); }
+
+  /* step */
+  .step { margin-bottom: 40px; position: relative; padding-left: 48px; }
+  .step-num {
+    position: absolute; left: 0; top: 0; width: 36px; height: 36px;
+    background: var(--accent); color: var(--bg); font-family: var(--serif);
+    font-size: 18px; font-weight: 700; display: flex; align-items: center;
+    justify-content: center; border-radius: 50%;
+  }
+  .step-title { font-family: var(--serif); font-size: 18px; margin-bottom: 8px; }
+  .step-why {
+    background: var(--bg-card); border-left: 3px solid var(--blue);
+    padding: 12px 16px; margin: 12px 0; border-radius: 2px;
+  }
+  .step-why-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--blue); text-transform: uppercase; margin-bottom: 4px;
+  }
+  .step-cmd {
+    background: var(--bg-card); border-left: 3px solid var(--green);
+    padding: 12px 16px; margin: 12px 0; border-radius: 2px;
+  }
+  .step-cmd-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--green); text-transform: uppercase; margin-bottom: 4px;
+  }
+  .step-expect {
+    background: var(--bg-card); border-left: 3px solid var(--amber);
+    padding: 12px 16px; margin: 12px 0; border-radius: 2px;
+  }
+  .step-expect-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em;
+    color: var(--amber); text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  /* diagram */
+  .diagram {
+    background: #0f0c0a; border: 1px solid var(--border); border-radius: 6px;
+    padding: 24px; margin: 24px 0; font-family: var(--mono); font-size: 13px;
+    line-height: 1.6; white-space: pre; overflow-x: auto;
+  }
+  .d-accent { color: var(--accent); font-weight: bold; }
+  .d-green { color: var(--green); }
+  .d-blue { color: var(--blue); }
+  .d-dim { color: var(--text-dim); }
+  .d-amber { color: var(--amber); }
+
+  /* metaphor */
+  .metaphor {
+    background: linear-gradient(135deg, var(--accent-soft) 0%, transparent 100%);
+    border: 1px solid var(--accent); border-radius: 6px; padding: 24px 28px; margin: 24px 0;
+  }
+  .metaphor-title { font-family: var(--serif); font-size: 20px; color: var(--accent); margin-bottom: 12px; }
+  .metaphor-body { color: var(--text); font-size: 15px; }
+  .metaphor-body strong { color: var(--accent); }
+
+  .footer {
+    margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--border);
+    text-align: center; color: var(--text-dim); font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.1em;
+  }
+  @media (max-width: 640px) {
+    body { padding: 24px 16px; }
+    .header h1 { font-size: 28px; }
+    .step { padding-left: 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header class="header">
+    <div class="header-tag">Verification + Education</div>
+    <h1>LINE Login OAuth<br>驗證指南 + 系統解說</h1>
+    <div class="header-sub">每一步都解釋「為什麼」，讓你真正理解自己做了什麼</div>
+  </header>
+
+  <!-- ============================== PART 1 ============================== -->
+  <section>
+    <h2 class="section-title">Part 1 · 驗證流程（從零重跑一遍）</h2>
+    <div class="prose">
+      <p>以下步驟假設你的環境已經 setup 好（Docker 跑著、npm run dev 跑著）。如果沒有，先把環境啟動。</p>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-title">確認後端活著</div>
+      <div class="step-why">
+        <div class="step-why-label">為什麼要做</div>
+        後端是 LINE Login 的核心——它負責跟 LINE 伺服器溝通、驗證身分、建立帳號。如果後端沒跑，後面都不用測。
+      </div>
+      <div class="step-cmd">
+        <div class="step-cmd-label">指令</div>
+        <pre><code>curl.exe -o NUL -w "health %{http_code}`n" http://localhost:5001/health
+curl.exe -o NUL -w "members %{http_code}`n" http://localhost:5001/api/members/me</code></pre>
+      </div>
+      <div class="step-expect">
+        <div class="step-expect-label">預期結果</div>
+        <code>health 200</code> → 後端活著<br>
+        <code>members 401</code> → members API 存在，只是沒帶 token 所以被拒（這是正確的！401 = 有保護）
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-title">確認前端代理通到後端</div>
+      <div class="step-why">
+        <div class="step-why-label">為什麼要做</div>
+        前端（Next.js, port 3000）跟後端（Flask, port 5001）是兩個不同的程式。瀏覽器不能直接打 5001（會有 CORS 問題），所以 Next.js 設了代理：<code>/api/*</code> 的請求會被自動轉到 Flask。這一步確認代理有在運作。
+      </div>
+      <div class="step-cmd">
+        <div class="step-cmd-label">指令</div>
+        <pre><code>curl.exe -o NUL -w "proxy %{http_code}`n" http://localhost:3000/api/members/me</code></pre>
+      </div>
+      <div class="step-expect">
+        <div class="step-expect-label">預期結果</div>
+        <code>proxy 401</code> → 代理成功把請求轉到後端（401 = 後端收到了、只是沒 token）<br><br>
+        如果是 <code>404</code> → 代理沒設好（next.config.mjs 的 rewrites 有問題）<br>
+        如果是 <code>500</code> → 代理轉到了錯的後端
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-title">確認資料庫有 members 表 + 新欄位</div>
+      <div class="step-why">
+        <div class="step-why-label">為什麼要做</div>
+        你加了三個欄位（email, google_sub, push_enabled）到 members 表。如果 DB 沒更新，LINE Login 建帳號時會出錯。
+      </div>
+      <div class="step-cmd">
+        <div class="step-cmd-label">指令</div>
+        <pre><code>docker-compose exec yuanyin-mysql mysql -u root -p"yuanyin-root" yuanyin -e "DESCRIBE members;"</code></pre>
+      </div>
+      <div class="step-expect">
+        <div class="step-expect-label">預期結果</div>
+        看到 10 個欄位，其中：<br>
+        <code>line_user_id</code> Null = YES（可選，因為 Google 用戶沒有）<br>
+        <code>email</code> 存在<br>
+        <code>google_sub</code> 存在<br>
+        <code>push_enabled</code> 存在、default = 1
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-title">清除舊登入狀態（確保乾淨測試）</div>
+      <div class="step-why">
+        <div class="step-why-label">為什麼要做</div>
+        瀏覽器的 localStorage 可能殘留舊 token。舊 token 如果過期或無效，會干擾測試——前端以為你「已登入」，結果打 API 失敗、又把你踢回「未登入」，造成混亂。
+      </div>
+      <div class="step-cmd">
+        <div class="step-cmd-label">操作</div>
+        方法 A：用無痕視窗（Ctrl+Shift+N）<br>
+        方法 B：F12 → Application → Local Storage → localhost:3000 → 刪除 <code>lyz_member_token</code>
+      </div>
+      <div class="step-expect">
+        <div class="step-expect-label">預期結果</div>
+        Local Storage 裡沒有 <code>lyz_member_token</code>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-title">啟動 LINE Login OAuth</div>
+      <div class="step-why">
+        <div class="step-why-label">為什麼要做</div>
+        這是整個流程的起點。你打後端的 <code>/api/members/oauth/line/authorize</code>，後端會組一個 LINE 授權 URL、把你導過去。<br><br>
+        <strong>為什麼不是打前端的 /api/？</strong><br>
+        因為 OAuth 的 authorize 步驟需要「server-side redirect」（伺服器直接導向），不是 AJAX。前端代理不適合處理 redirect，所以直接打後端。
+      </div>
+      <div class="step-cmd">
+        <div class="step-cmd-label">操作</div>
+        瀏覽器輸入：<code>http://localhost:5001/api/members/oauth/line/authorize</code>
+      </div>
+      <div class="step-expect">
+        <div class="step-expect-label">預期結果</div>
+        瀏覽器跳到 LINE 的綠色授權頁面。<br>
+        網址列變成 <code>https://access.line.me/oauth2/v2.1/authorize?...</code><br><br>
+        如果看到錯誤頁面 → Channel ID 或 Callback URL 設錯了
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-title">在 LINE 授權</div>
+      <div class="step-why">
+        <div class="step-why-label">為什麼要做</div>
+        這是 OAuth 的核心——使用者「親自同意」把自己的資料（名字、頭像、email）給你的 App。LINE 不會在使用者不知情的情況下洩漏資料。<br><br>
+        <strong>OAuth 的安全原則</strong>：你的 App 永遠拿不到使用者的 LINE 密碼。你只拿到一個「臨時授權碼」（code），用這個 code 去跟 LINE 換資料。
+      </div>
+      <div class="step-cmd">
+        <div class="step-cmd-label">操作</div>
+        在 LINE 授權頁面，用手機掃 QR code 或輸入帳密，然後按「允許」
+      </div>
+      <div class="step-expect">
+        <div class="step-expect-label">預期結果</div>
+        LINE 把你導回後端的 callback URL：<br>
+        <code>http://localhost:5001/api/members/oauth/line/callback?code=xxx&state=xxx</code><br><br>
+        你不會看到這個頁面——後端收到後會立刻再導回前端。整個過程一秒內完成。
+      </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="step">
+      <div class="step-num">7</div>
+      <div class="step-title">觀察導回前端的結果</div>
+      <div class="step-why">
+        <div class="step-why-label">為什麼要做</div>
+        後端收到 LINE 的 code 後，做了以下事情（你看不到、但在背後發生）：<br>
+        1. 用 code 跟 LINE 換 access_token + id_token<br>
+        2. 驗證 id_token（確認是 LINE 簽的、沒被篡改）<br>
+        3. 從 id_token 取出你的 LINE UID、名字、頭像<br>
+        4. 在 members 表建立或更新你的帳號<br>
+        5. 簽發一個 JWT token（這是「你是誰」的證明）<br>
+        6. 把你導回前端首頁，token 放在 URL 裡
+      </div>
+      <div class="step-expect">
+        <div class="step-expect-label">預期結果</div>
+        瀏覽器網址列短暫出現：<br>
+        <code>http://localhost:3000/?login_success=true&token=eyJ...</code><br><br>
+        然後自動變乾淨成 <code>http://localhost:3000/</code><br>
+        （MemberProvider 把 token 存到 localStorage、然後清掉 URL）
+      </div>
+    </div>
+
+    <!-- Step 8 -->
+    <div class="step">
+      <div class="step-num">8</div>
+      <div class="step-title">確認登入狀態</div>
+      <div class="step-why">
+        <div class="step-why-label">為什麼要做</div>
+        前端的 MemberProvider 拿到 token 後，會打 <code>/api/members/me</code> 問後端：「這個 token 是誰的？」後端驗完 JWT、回傳你的資料（名字、頭像）。前端收到後更新畫面。
+      </div>
+      <div class="step-cmd">
+        <div class="step-cmd-label">操作</div>
+        點底部導覽列的「我的」
+      </div>
+      <div class="step-expect">
+        <div class="step-expect-label">預期結果</div>
+        看到你的 LINE 名字 + 頭像，不再是 demo 登入表單。<br><br>
+        <strong>同時確認 DevTools</strong>：<br>
+        F12 → Application → Local Storage → <code>lyz_member_token</code> 有值<br>
+        F12 → Network → 搜尋 <code>me</code> → <code>/api/members/me</code> 狀態 200
+      </div>
+    </div>
+
+    <!-- Step 9 -->
+    <div class="step">
+      <div class="step-num">9</div>
+      <div class="step-title">確認資料庫有你的帳號</div>
+      <div class="step-why">
+        <div class="step-why-label">為什麼要做</div>
+        最終確認：你的帳號真的寫進 MySQL 了。這確保即使關掉瀏覽器、下次回來還在。
+      </div>
+      <div class="step-cmd">
+        <div class="step-cmd-label">指令</div>
+        <pre><code>docker-compose exec yuanyin-mysql mysql -u root -p"yuanyin-root" yuanyin --default-character-set=utf8mb4 -e "SELECT id, line_user_id, provider, display_name, email, push_enabled FROM members;"</code></pre>
+      </div>
+      <div class="step-expect">
+        <div class="step-expect-label">預期結果</div>
+        看到一筆資料：<br>
+        <code>provider = line</code>、<code>display_name = 你的LINE名字</code>、<code>line_user_id = U...</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== PART 2 ============================== -->
+  <section>
+    <h2 class="section-title">Part 2 · 系統解說（你到底做了什麼）</h2>
+
+    <div class="metaphor">
+      <div class="metaphor-title">用「餐廳」比喻整個系統</div>
+      <div class="metaphor-body">
+        想像你開了一間餐廳。<br><br>
+        <strong>Web App（Next.js）</strong> = 餐廳的門面和裝潢。客人走進來看到菜單、看到擺設。<br>
+        <strong>Web App 後端（Flask）</strong> = 廚房。客人看不到，但沒有廚房就沒有菜。<br>
+        <strong>MySQL 資料庫</strong> = 冰箱和倉庫。所有食材（資料）存在這裡。<br>
+        <strong>LINE Gateway</strong> = 外送平台的接口。告訴外面的人「我們有新菜」。<br>
+        <strong>TEP</strong> = 食材供應商（廟方資料）。<br><br>
+        <strong>你今天做的「LINE Login」</strong> = 幫餐廳裝了一台「會員卡機」。客人走進來刷 LINE，餐廳就知道你是誰、記住你喜歡什麼。
+      </div>
+    </div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; color: var(--accent); margin: 32px 0 16px;">OAuth 流程全圖</h3>
+
+    <div class="diagram"><span class="d-dim">信眾（你）</span>
+  │
+  │ ① 點「用 LINE 登入」
+  ▼
+<span class="d-accent">Flask 後端</span> /api/members/oauth/line/authorize
+  │
+  │ ② 組 LINE 授權 URL → redirect
+  ▼
+<span class="d-green">LINE 伺服器</span> access.line.me/oauth2/v2.1/authorize
+  │
+  │ ③ 信眾按「允許」→ LINE 給一個臨時授權碼（code）
+  ▼
+<span class="d-accent">Flask 後端</span> /api/members/oauth/line/callback?code=xxx
+  │
+  │ ④ 用 code 跟 LINE 換 id_token（server-to-server，信眾看不到）
+  │ ⑤ 驗 id_token → 拿到 LINE UID + 名字 + 頭像
+  │ ⑥ 在 MySQL 建立 member 帳號
+  │ ⑦ 簽發 JWT token
+  │ ⑧ redirect 到前端，帶 token
+  ▼
+<span class="d-blue">Next.js 前端</span> localhost:3000/?token=eyJ...
+  │
+  │ ⑨ MemberProvider 讀 URL token → 存 localStorage
+  │ ⑩ 打 /api/members/me → 經代理到後端 → 驗 JWT → 回傳資料
+  │ ⑪ 顯示「邱識瑋 · LINE 會員」
+  ▼
+<span class="d-dim">信眾看到自己的名字 🎉</span></div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; color: var(--accent); margin: 32px 0 16px;">你改了什麼、為什麼改</h3>
+
+    <div class="diagram"><span class="d-accent">你寫的新檔案</span>
+
+<span class="d-green">backend/app/modules/members/line_login.py</span>
+  │ 這是什麼：LINE OAuth 流程的「工具箱」
+  │ 三個函式：
+  │   get_authorize_url()     → 組 LINE 授權網址
+  │   exchange_code_for_tokens() → 用 code 換 token
+  │   verify_id_token()       → 驗 token、拿使用者資料
+  │
+  │ 為什麼要獨立一個檔案：
+  │   把「跟 LINE 溝通」的邏輯跟「處理 HTTP 請求」分開
+  │   以後改 LINE API 版本只改這個檔案
+
+<span class="d-accent">你改的檔案</span>
+
+<span class="d-amber">backend/app/modules/members/models.py</span>
+  │ 改了什麼：members 表加 3 個欄位
+  │   email      → 帳號合併用（C 方案）
+  │   google_sub → 之後 Google Login 用
+  │   push_enabled → 推播開關
+  │   line_user_id 改成 nullable → Google 用戶沒有 LINE UID
+  │
+  │ 為什麼改：原本 members 表只認 LINE
+  │   改完之後可以認 LINE + Google + 未來任何 OAuth
+
+<span class="d-amber">backend/app/modules/members/routes.py</span>
+  │ 加了什麼：3 個新 endpoint
+  │   GET  /oauth/line/authorize  → 導去 LINE
+  │   GET  /oauth/line/callback   → LINE 回來後處理
+  │   POST /oauth/line/bind       → Google 帳號補綁 LINE
+  │
+  │ 為什麼加在 routes.py 不是新檔案：
+  │   這 3 個 endpoint 屬於 members 模組（跟會員有關）
+  │   學長的模組化架構是「一個模組一個 routes.py」
+
+<span class="d-amber">frontend/components/MemberProvider.tsx</span>
+  │ 改了什麼：bootstrap 函式開頭加 8 行
+  │   讀 URL 的 token → 存 localStorage → 清掉 URL
+  │
+  │ 為什麼改：OAuth callback 把 token 放在 URL 帶回來
+  │   但前端原本只會讀 localStorage
+  │   不加這 8 行 → token 在 URL 裡但前端不知道 → 永遠「未登入」
+
+<span class="d-amber">backend/schema.sql</span>
+  │ 改了什麼：members 表加 3 個欄位、line_user_id 去掉 NOT NULL
+  │ 為什麼改：跟 models.py 同步（DB 結構要一致）
+
+<span class="d-amber">docker-compose.yml + .env + .env.example</span>
+  │ 改了什麼：加 LINE Login 環境變數
+  │ 為什麼改：Channel ID / Secret 不能寫死在程式裡
+  │   放環境變數 → 每個環境（dev / prod）各自設、不會互相干擾
+
+<span class="d-amber">frontend/.env.local</span>
+  │ 改了什麼：加 BACKEND_INTERNAL_URL=http://localhost:5001
+  │ 為什麼改：沒設這行 → 代理跑去 Zeabur 正式後端 → token 對不上 → 401</div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; color: var(--accent); margin: 32px 0 16px;">三層架構：各自做什麼</h3>
+
+    <div class="diagram"><span class="d-dim">信眾的手機 / 電腦</span>
+       │
+       │ 瀏覽器                            LINE App
+       ▼                                   ▼
+┌──────────────────┐              ┌──────────────────┐
+│ <span class="d-blue">Next.js 前端</span>      │              │ <span class="d-green">LINE Gateway</span>     │
+│ port 3000        │              │ <span class="d-green">（你的 Flask）</span>     │
+│                  │              │ port 5002        │
+│ 做什麼：         │              │                  │
+│ · 顯示頁面       │              │ 做什麼：         │
+│ · 美術 / 動畫    │              │ · 收 webhook     │
+│ · 代理 API 請求  │              │ · 推播 Flex 卡片 │
+│                  │              │ · Rich Menu      │
+│ 不做什麼：       │              │ · 關鍵字回覆     │
+│ · 不連資料庫     │              │                  │
+│ · 不處理登入邏輯 │              │ 不做什麼：       │
+│ · 不存密碼       │              │ · 不做 UI 頁面   │
+└────────┬─────────┘              │ · 不存帳號資料   │
+         │ /api/* 代理             └────────┬─────────┘
+         ▼                                  │
+┌──────────────────────────────────────────┐│
+│ <span class="d-accent">Flask 後端（Web App Backend）</span>             ││
+│ port 5001                                ││
+│                                          ││
+│ 做什麼：                                 ││
+│ · LINE Login OAuth（<span class="d-green">你剛做的</span>）          ││
+│ · 驗證 JWT token                         ││
+│ · 管理 members / wishes / favorites      ││
+│ · 之後：Google Login / 訂閱 / 報名       │◀┘
+│                                          │ 推播時呼叫
+│ 不做什麼：                               │
+│ · 不顯示 UI                              │
+│ · 不處理 LINE 訊息                       │
+└────────┬─────────────────────────────────┘
+         │
+         ▼
+┌──────────────────┐
+│ <span class="d-amber">MySQL 資料庫</span>      │
+│ port 3308        │
+│                  │
+│ 存什麼：         │
+│ · members（帳號）│
+│ · wishes（許願） │
+│ · favorites（收藏）│
+│ · temples（廟宇）│
+│ · deities（神明）│
+│ · analytics（事件）│
+└──────────────────┘</div>
+
+    <h3 style="font-family: var(--serif); font-size: 20px; color: var(--accent); margin: 32px 0 16px;">JWT Token 到底是什麼</h3>
+
+    <div class="prose">
+      <p>你在 URL 裡看到的那串 <code>eyJhbGciOiJIUzI1NiIs...</code> 就是 JWT（JSON Web Token）。它是一張「數位身分證」。</p>
+      <p>JWT 分三段，用 <code>.</code> 分隔：</p>
+    </div>
+
+    <div class="diagram"><span class="d-blue">eyJhbGciOiJIUzI1NiIs...</span>  ← Header（演算法資訊）
+<span class="d-accent">eyJmcmVzaCI6ZmFsc2Us...</span>  ← Payload（你的資料）
+<span class="d-green">brB_BsLBlMZMU2g_cqyd...</span>  ← Signature（防偽造簽章）
+
+Payload 解開後長這樣：
+{
+  "kind": "member",        <span class="d-dim">← 這是會員 token（不是 admin token）</span>
+  "memberId": 1,           <span class="d-dim">← 你在 DB 裡的 ID</span>
+  "lineUserId": "U8a2e..", <span class="d-dim">← 你的 LINE UID</span>
+  "exp": 1780519332        <span class="d-dim">← 過期時間（8 小時後）</span>
+}
+
+<span class="d-dim">重點：</span>
+<span class="d-dim">· JWT 不是加密的（任何人都能解開看內容）</span>
+<span class="d-dim">· 但只有後端能「簽」（因為只有後端知道 secret）</span>
+<span class="d-dim">· 所以它能證明「這張身分證是後端發的、沒被竄改」</span>
+<span class="d-dim">· 就像你的身分證不是加密的（大家都看得到名字）</span>
+<span class="d-dim">  但只有政府能發（有防偽鋼印）</span></div>
+
+  </section>
+
+  <!-- ============================== PART 3 ============================== -->
+  <section>
+    <h2 class="section-title">Part 3 · 你接下來可以做的事</h2>
+
+    <div class="diagram"><span class="d-accent">已完成</span>
+  ✓ PR1：members 表多 OAuth 欄位
+  ✓ PR2：LINE Login OAuth 完整流程
+  ✓ 前端接收 OAuth token
+  ✓ 本地開發環境全通
+
+<span class="d-amber">下一步（優先序高→低）</span>
+  □ PR3：Google Login OAuth
+       → 跟 LINE Login 結構幾乎一樣
+       → 改 line_login.py → 新建 google_login.py
+       → routes.py 加 /oauth/google/authorize + callback
+  
+  □ PR4：帳號合併 C 方案
+       → email 衝突偵測
+       → 「要綁定嗎？」提示
+       → bind endpoint（你已經寫了骨架）
+  
+  □ PR5：訂閱系統
+       → subscriptions 表 + API
+       → 收藏廟宇 = 訂閱（學長的 favorites 可以沿用）
+       → 給 LINE Gateway 用的「查訂閱者」API
+  
+  □ PR6：LINE Gateway ↔ Web App 推播串接
+       → Web App 觸發推播 → LINE Gateway 推 Flex 卡片
+       → 信眾在 LINE 收到通知
+
+<span class="d-dim">遠期</span>
+  □ 報名系統
+  □ 定時推播（活動前一天提醒）
+  □ 推播開關（push_enabled）
+  □ 統一部署到 Zeabur</div>
+
+  </section>
+
+  <footer class="footer">
+    LINE Login OAuth · 驗證指南 + 系統解說 · 2026-06-03 · Max
+  </footer>
+
+</div>
+</body>
+</html>
