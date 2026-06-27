@@ -9,10 +9,17 @@ load_dotenv()
 def create_app():
     app = Flask(__name__)
 
-    # 資料庫設定
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-        "DATABASE_URL", "postgresql://postgres:dev@localhost:5432/gateway"
+    # 資料庫設定（MySQL，與 Web App / TEP 統一）
+    db_url = os.getenv(
+        "DATABASE_URL", "mysql+pymysql://root:@localhost:3306/gateway?charset=utf8mb4"
     )
+    # 部署環境（Zeabur）常給 mysql:// 開頭，SQLAlchemy 需要明確指定 pymysql driver
+    if db_url.startswith("mysql://"):
+        db_url = "mysql+pymysql://" + db_url[len("mysql://"):]
+    # 確保 utf8mb4（中文不亂碼）
+    if db_url.startswith("mysql+pymysql://") and "charset=" not in db_url:
+        db_url += ("&" if "?" in db_url else "?") + "charset=utf8mb4"
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-change-me")
 
