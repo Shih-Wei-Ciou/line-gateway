@@ -27,9 +27,14 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # 把 models import 進來，Flask-Migrate 才能看到（建表用）
+    # 把 models import 進來，並在啟動時確保資料表存在
+    # （雲端免手動 flask db upgrade；DB 還沒設好時不讓 app 崩潰，postback 仍可運作）
     with app.app_context():
         import models  # noqa: F401
+        try:
+            db.create_all()
+        except Exception as exc:
+            app.logger.warning("db.create_all 跳過（DB 可能還沒設好）：%s", exc)
 
     # 路由
     @app.route("/")
