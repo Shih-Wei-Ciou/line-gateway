@@ -17,8 +17,10 @@ Postback data 格式：query string，例如：
 from __future__ import annotations
 
 import logging
+import os
 from urllib.parse import parse_qs
 
+import requests
 from linebot.v3.messaging import TextMessage
 
 import services.event_service as ev_svc
@@ -26,9 +28,14 @@ from services.flex_builder import (
     build_cancel_confirm,
     build_my_registrations,
     build_register_confirm,
+    build_temple_recommendations,
 )
 
 logger = logging.getLogger(__name__)
+
+WEBAPP_BASE_URL = os.getenv("WEBAPP_BASE_URL", "https://yuanyinbb.zeabur.app").rstrip("/")
+# 合作洽詢聯絡方式（之後接表單/Email 再改這裡）
+COOP_CONTACT = os.getenv("COOP_CONTACT", "")
 
 
 # ── 主入口 ────────────────────────────────────────────────────────────────────
@@ -39,6 +46,11 @@ def handle_postback(line_uid: str, data: str) -> list:
     不應拋例外——任何錯誤都包成「系統錯誤」訊息回傳。
     """
     try:
+        # Rich Menu 四分頁切換（richmenuswitch）也會送 data="tab=..." 的 postback 過來。
+        # LINE 已自動換好選單，這裡直接忽略、不回覆，避免洗版。
+        if data.startswith("tab="):
+            return []
+
         params = {k: v[0] for k, v in parse_qs(data).items()}
         action = params.get("action", "")
 
@@ -52,6 +64,10 @@ def handle_postback(line_uid: str, data: str) -> list:
             return _do_cancel(line_uid, params)
         elif action == "my_regs":
             return _my_regs(line_uid)
+        elif action == "recommend_temples":
+            return _recommend_temples()
+        elif action == "coop_soon":
+            return _coop_soon()
         elif action in ("cancel_register_flow", "keep_registration"):
             return [TextMessage(text="好的，已取消操作。")]
         else:
@@ -153,3 +169,29 @@ def _my_regs(line_uid: str) -> list:
     # 只顯示 registered 狀態
     active_regs = [r for r in regs if r.get("status") == "registered"]
     return [build_my_registrations(active_regs)]
+
+
+def _recommend_temples() -> list:
+    """尋緣「依願找廟」→ 從 Web App 撈廟宇組 Flex carousel；失敗或無資料則導去找廟頁。"""
+    temples: list = []
+    try:
+        r = requests.get(f"{WEBAPP_BASE_URL}/api/temples", timeout=8)
+        if r.ok:
+            payload = r.json()
+            temples = payload.get("data") if isinstance(payload, dict) else payload
+            temples = temples or []
+    except Exception as exc:
+        logger.warning("[postback] 撈廟宇失敗: %s", exc)
+
+    msg = build_temple_recommendations(temples, WEBAPP_BASE_URL)
+    if msg is None:
+        return [TextMessage(text=f"為你推薦宮廟～先到找廟看看吧：\n{WEBAPP_BASE_URL}/search")]
+    return [msg]
+
+
+def _coop_soon() -> list:
+    """合作分頁的「合作洽詢」→ 先回固定文字（功能尚未開放）。"""
+    contact = f"\n聯絡：{COOP_CONTACT}" if COOP_CONTACT else ""
+    return [TextMessage(
+        text="合作洽詢即將開放 🙏\n歡迎廟方、人才與我們聯繫，我們會盡快回覆。" + contact
+    )]

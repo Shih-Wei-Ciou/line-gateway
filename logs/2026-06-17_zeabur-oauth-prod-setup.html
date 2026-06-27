@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>正式站 OAuth 上線設定 · 進度追蹤</title>
+<style>
+:root{
+  --l0:#f3eee2; --l1:#fffdf8; --l2:#f8f2e6;
+  --ink:#2a2620; --ink-soft:#6b6457; --ink-faint:#9a9387;
+  --line:#e3dcc9; --line-strong:#cdc3ac;
+  --accent:#b3552b; --accent-soft:#e8d3c4;
+  --good:#4d7a4d; --warn:#a87422; --bad:#a23a2a;
+  --serif:"Iowan Old Style","Apple Garamond",Cambria,"Noto Serif TC","Songti TC",serif;
+  --sans:-apple-system,"Segoe UI Variable","Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:"Cascadia Code","SF Mono",Consolas,"Roboto Mono",monospace;
+  --sp-1:8px; --sp-2:16px; --sp-3:24px; --sp-4:32px; --sp-5:48px; --sp-6:72px;
+  --radius:10px;
+  --shadow:0 1px 2px rgba(60,50,30,.04), 0 6px 18px rgba(60,50,30,.06);
+  --nav-w:280px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0; background:var(--l0); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.75; -webkit-font-smoothing:antialiased;}
+a{color:var(--accent); text-underline-offset:3px}
+.layout{display:flex; min-height:100vh}
+.nav{width:var(--nav-w); flex:0 0 var(--nav-w); position:sticky; top:0; align-self:flex-start;
+  height:100vh; overflow-y:auto; padding:var(--sp-4) var(--sp-2) var(--sp-4) var(--sp-3);
+  background:var(--l0); border-right:1px solid var(--line);}
+.nav-brand{font-family:var(--serif); font-size:13px; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:var(--sp-1);}
+.nav-title{font-family:var(--serif); font-size:21px; line-height:1.25; font-weight:600; margin-bottom:var(--sp-4);}
+.nav-title em{color:var(--accent); font-style:italic}
+.toc{list-style:none; margin:0; padding:0; counter-reset:chap}
+.toc-item > .toc-link{display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:7px;
+  cursor:pointer; color:var(--ink); text-decoration:none; font-size:14.5px; transition:background .15s;}
+.toc-link:hover{background:var(--accent-soft)}
+.toc-link .rn{counter-increment:chap; font-family:var(--mono); font-size:11px; color:var(--ink-faint); min-width:22px;}
+.toc-link .rn::before{content:counter(chap,upper-roman) "."}
+.toc-link .label{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.toc-item.active > .toc-link{background:var(--accent-soft); font-weight:600;}
+.toc-item.active > .toc-link .rn{color:var(--accent)}
+.main{flex:1; min-width:0; padding:var(--sp-5) var(--sp-6); max-width:1080px}
+.menu-btn{display:none; position:fixed; top:14px; left:14px; z-index:50; width:42px; height:42px;
+  border-radius:9px; border:1px solid var(--line); background:var(--l1); color:var(--ink); font-size:18px; cursor:pointer; box-shadow:var(--shadow);}
+.section{background:var(--l1); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+  padding:var(--sp-5) var(--sp-5); margin-bottom:var(--sp-4); scroll-margin-top:24px;}
+.eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); margin-bottom:var(--sp-1);}
+.section h2{font-family:var(--serif); font-size:32px; line-height:1.15; font-weight:600; margin:0 0 var(--sp-2); letter-spacing:-.01em;}
+.section h2 em{color:var(--accent); font-style:italic}
+.section h2 + .rule{width:54px; height:3px; background:var(--accent); border:none; margin:0 0 var(--sp-3);}
+.section p{margin:0 0 var(--sp-2); max-width:74ch}
+.lead{color:var(--ink-soft); font-size:17px}
+.lede{font-family:var(--serif); font-style:italic; font-size:19px; line-height:1.7; color:var(--ink);
+  border-left:3px solid var(--accent); padding:var(--sp-1) 0 var(--sp-1) var(--sp-3); margin:var(--sp-3) 0;}
+.finding{background:var(--l2); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; padding:var(--sp-3) var(--sp-3); margin:var(--sp-2) 0;}
+.finding .f-tag{font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--accent); text-transform:uppercase; margin-bottom:6px;}
+.finding p{margin:0 0 var(--sp-1)} .finding p:last-child{margin:0}
+.finding.good{border-left-color:var(--good)} .finding.good .f-tag{color:var(--good)}
+.finding.warn{border-left-color:var(--warn)} .finding.warn .f-tag{color:var(--warn)}
+.finding.bad{border-left-color:var(--bad)}   .finding.bad .f-tag{color:var(--bad)}
+.table-card{background:var(--l2); border:1px solid var(--line); border-radius:var(--radius); padding:var(--sp-3); margin:var(--sp-3) 0; overflow-x:auto;}
+table.sci{width:100%; border-collapse:collapse; font-size:14px}
+table.sci thead th{font-family:var(--sans); font-weight:600; font-size:12.5px; color:var(--ink-soft); text-align:left; padding:8px 14px; border-bottom:1px solid var(--line-strong);}
+table.sci tbody td{padding:9px 14px; text-align:left; border-bottom:1px solid var(--line); font-size:14px; vertical-align:top;}
+table.sci tbody tr:last-child td{border-bottom:2px solid var(--line-strong)}
+table.sci tbody td:first-child{font-weight:600}
+.pill{display:inline-block; padding:1px 9px; border-radius:11px; font-size:12px; font-family:var(--sans); font-weight:600; white-space:nowrap}
+.pill.good{background:#e3efe1; color:var(--good)}
+.pill.warn{background:#f3e8cf; color:var(--warn)}
+.pill.bad{background:#f3dcd8; color:var(--bad)}
+.pill.dim{background:#ece6d8; color:var(--ink-soft)}
+.caption{font-size:12.5px; color:var(--ink-faint); margin-top:var(--sp-1)}
+code{font-family:var(--mono); font-size:0.86em; background:var(--l2); padding:2px 6px; border-radius:4px; color:var(--accent); border:1px solid var(--line); word-break:break-all}
+.callout{border-left:3px solid var(--ink-soft); background:var(--l2); padding:var(--sp-2) var(--sp-3); border-radius:0 8px 8px 0; margin:var(--sp-2) 0; font-size:14.5px; color:var(--ink-soft);}
+.callout strong{color:var(--ink)} .callout.accent{border-left-color:var(--accent)}
+@media (max-width:900px){
+  .menu-btn{display:block}
+  .nav{position:fixed; left:0; top:0; z-index:40; transform:translateX(-100%); transition:transform .25s; box-shadow:var(--shadow)}
+  .nav.open{transform:translateX(0)}
+  .main{padding:var(--sp-5) var(--sp-3); padding-top:64px}
+  .section{padding:var(--sp-4) var(--sp-3)} .section h2{font-size:25px}
+}
+@media print{ .nav,.menu-btn{display:none} body{background:#fff} .section{box-shadow:none; border-color:#ccc; break-inside:avoid} .main{max-width:none; padding:0} }
+</style>
+</head>
+<body>
+<button class="menu-btn" id="menuBtn" aria-label="目錄">☰</button>
+<div class="layout">
+  <nav class="nav" id="nav">
+    <div class="nav-brand">緣引拜拜通 · 正式站</div>
+    <div class="nav-title">正式站 OAuth<br><em>上線設定</em>進度</div>
+    <ul class="toc" id="toc"></ul>
+  </nav>
+  <main class="main" id="main">
+
+    <section class="section" id="cover" data-title="封面與現況">
+      <div class="eyebrow">ZEABUR OAUTH GO-LIVE · 2026-06-17</div>
+      <h2>正式站 OAuth <em>上線設定</em> 進度</h2>
+      <hr class="rule">
+      <p class="lead">PR 已併進 main、Zeabur 自動部署了，但正式站要能真的「LINE / Google 登入」，還要補一批環境變數與 Console 白名單。這份追蹤誰做了、誰還沒。</p>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>網域</th><th>角色</th><th>注意</th></tr></thead>
+          <tbody>
+            <tr><td><code>yuanyinb.zeabur.app</code></td><td>後端 API（templeuser-scrize）</td><td><span class="pill warn">單一個 b</span></td></tr>
+            <tr><td><code>yuanyinbb.zeabur.app</code></td><td>前端（使用者看到的）</td><td><span class="pill warn">兩個 b</span></td></tr>
+          </tbody>
+        </table>
+        <div class="caption">兩網域只差一個 b，所有 callback 走後端（單 b），只有 WEBAPP_URL 是前端（雙 b）。</div>
+      </div>
+    </section>
+
+    <section class="section" id="done" data-title="已完成">
+      <h2>已完成</h2>
+      <hr class="rule">
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>項目</th><th>值 / 內容</th><th>狀態</th></tr></thead>
+          <tbody>
+            <tr><td>PR 併入 main</td><td>feat/line-auth → main（merge <code>694fffd</code>）</td><td><span class="pill good">完成</span></td></tr>
+            <tr><td>前端 <code>NEXT_PUBLIC_API_URL</code></td><td><code>https://yuanyinb.zeabur.app/api</code></td><td><span class="pill good">完成</span></td></tr>
+            <tr><td>後端 <code>CORS_ORIGINS</code></td><td><code>https://yuanyinbb.zeabur.app</code></td><td><span class="pill good">完成</span></td></tr>
+          </tbody>
+        </table>
+        <div class="caption">上面兩個變數是一對：前端用絕對網址跨域打後端，後端 CORS 放行前端網域。一般 API 呼叫這樣就通。</div>
+      </div>
+    </section>
+
+    <section class="section" id="blocker" data-title="關鍵缺口">
+      <h2>關鍵缺口 — 登入按鈕還是壞的</h2>
+      <hr class="rule">
+      <div class="finding good">
+        <div class="f-tag">已解決 · 正式站登入成功 · 2026-06-17</div>
+        <p>真正的根因是 <strong>前端 <code>Dockerfile</code> 沒宣告 <code>NEXT_PUBLIC_BACKEND_URL</code> 這個 build arg</strong> → 就算 Zeabur 設了變數，build 也收不到 → 按鈕 fallback 到 <code>localhost:5001</code>。修法：Dockerfile 加 <code>ARG/ENV</code> + docker-compose build args（commit <code>94ca137</code>）→ push main → Zeabur 重 build → 前端服務的 <code>NEXT_PUBLIC_BACKEND_URL=https://yuanyinb.zeabur.app</code> 才烤得進去。<strong>重 build 後正式站 LINE / Google 登入皆實測成功。</strong></p>
+      </div>
+      <div class="callout accent">
+        <strong>通用教訓：</strong>Next.js 的 <code>NEXT_PUBLIC_*</code> 是 <strong>build 時烤死</strong>的。要在容器化部署生效，必須三者齊備：① Dockerfile 宣告對應 <code>ARG</code>；② 該服務環境變數有設；③ 觸發<strong>重 build</strong>（不是重啟）。少一個都不會生效。
+      </div>
+      <div class="callout accent">
+        <strong>前端服務新增這一條，問題就解：</strong><br>
+        <code>NEXT_PUBLIC_BACKEND_URL = https://yuanyinb.zeabur.app</code>（單 b）<br>
+        ⚠️ <code>NEXT_PUBLIC_</code> 是 build 時烤進去 → 設完前端要<strong>手動 Redeploy 一次</strong>。
+      </div>
+    </section>
+
+    <section class="section" id="todo" data-title="還沒做">
+      <h2>還沒做 · 待確認清單</h2>
+      <hr class="rule">
+      <div class="finding good">
+        <div class="f-tag">已全部完成 · 2026-06-17</div>
+        <p>以下清單使用者回報<strong>已全部設定完成</strong>（後端 5 條變數 + 前端 BACKEND_URL + 兩個 Console 白名單 + 前端 Redeploy）。保留清單供日後核對 / 換網域時參考。</p>
+      </div>
+      <p>核對用清單：</p>
+
+      <h3 style="font-family:var(--serif);color:var(--accent)">後端服務（yuanyinb）環境變數</h3>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>變數</th><th>該填的值</th><th>狀態</th></tr></thead>
+          <tbody>
+            <tr><td><code>GOOGLE_CALLBACK_URL</code></td><td><code>https://yuanyinb.zeabur.app/api/members/oauth/google/callback</code></td><td><span class="pill dim">待確認</span></td></tr>
+            <tr><td><code>LINE_LOGIN_CALLBACK_URL</code></td><td><code>https://yuanyinb.zeabur.app/api/members/oauth/line/callback</code></td><td><span class="pill dim">待確認</span></td></tr>
+            <tr><td><code>WEBAPP_URL</code></td><td><code>https://yuanyinbb.zeabur.app</code>（雙 b · 登入後導回）</td><td><span class="pill dim">待確認</span></td></tr>
+            <tr><td><code>GOOGLE_CLIENT_ID</code> / <code>GOOGLE_CLIENT_SECRET</code></td><td>（你的祕密值）</td><td><span class="pill dim">待確認</span></td></tr>
+            <tr><td><code>LINE_LOGIN_CHANNEL_ID</code> / <code>..._SECRET</code></td><td>（你的祕密值）</td><td><span class="pill dim">待確認</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="font-family:var(--serif);color:var(--accent)">前端服務（yuanyinbb）</h3>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>變數</th><th>值</th><th>狀態</th></tr></thead>
+          <tbody>
+            <tr><td><code>NEXT_PUBLIC_BACKEND_URL</code></td><td><code>https://yuanyinb.zeabur.app</code></td><td><span class="pill bad">必補</span></td></tr>
+            <tr><td>前端 Redeploy</td><td>設完上面那條後手動重新部署</td><td><span class="pill bad">必做</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="font-family:var(--serif);color:var(--accent)">Console 白名單</h3>
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>Console</th><th>加什麼</th><th>狀態</th></tr></thead>
+          <tbody>
+            <tr><td>Google Cloud · Authorized redirect URIs</td><td><code>https://yuanyinb.zeabur.app/api/members/oauth/google/callback</code></td><td><span class="pill dim">待確認</span></td></tr>
+            <tr><td>LINE Developers · Callback URL</td><td><code>https://yuanyinb.zeabur.app/api/members/oauth/line/callback</code></td><td><span class="pill dim">待確認</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="next" data-title="下一步順序">
+      <h2>下一步 · 照順序做</h2>
+      <hr class="rule">
+      <div class="table-card">
+        <table class="sci">
+          <thead><tr><th>#</th><th>動作</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>前端服務加 <code>NEXT_PUBLIC_BACKEND_URL = https://yuanyinb.zeabur.app</code></td></tr>
+            <tr><td>2</td><td>後端服務確認 5 條都在（GOOGLE_*、LINE_LOGIN_*、WEBAPP_URL）</td></tr>
+            <tr><td>3</td><td>Google Console + LINE Console 各加一條 callback 白名單</td></tr>
+            <tr><td>4</td><td><strong>前端 Redeploy</strong>（NEXT_PUBLIC 要重 build）</td></tr>
+            <tr><td>5</td><td>開 <code>https://yuanyinbb.zeabur.app/me</code> → 無痕點 Google/LINE 登入 → 看網址有沒有 <code>login_success=true</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">測的時候卡住，把瀏覽器網址列「導回那串」貼回來，就能判讀是哪一關（invalid_state / redirect_uri_mismatch / server_error…）。</div>
+    </section>
+
+  </main>
+</div>
+<script>
+(function(){
+  const main=document.getElementById('main'), toc=document.getElementById('toc');
+  const sections=[...main.querySelectorAll('.section')];
+  sections.forEach(sec=>{
+    const id=sec.id, title=sec.dataset.title||id;
+    const li=document.createElement('li'); li.className='toc-item'; li.dataset.target=id;
+    const a=document.createElement('a'); a.className='toc-link'; a.href='#'+id;
+    a.innerHTML=`<span class="rn"></span><span class="label">${title}</span>`;
+    li.appendChild(a); toc.appendChild(li);
+    a.addEventListener('click',e=>{e.preventDefault(); document.getElementById(id).scrollIntoView({behavior:'smooth'}); if(window.innerWidth<=900) document.getElementById('nav').classList.remove('open');});
+  });
+  const items=[...toc.querySelectorAll('.toc-item')], byId=Object.fromEntries(items.map(i=>[i.dataset.target,i]));
+  const spy=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){items.forEach(i=>i.classList.remove('active')); byId[en.target.id]?.classList.add('active');}})},{rootMargin:'-45% 0px -50% 0px'});
+  sections.forEach(s=>spy.observe(s));
+  document.getElementById('menuBtn').addEventListener('click',()=>document.getElementById('nav').classList.toggle('open'));
+})();
+</script>
+</body>
+</html>

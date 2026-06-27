@@ -13,10 +13,13 @@ from linebot.v3.messaging import (
     FlexBubble,
     FlexBox,
     FlexButton,
+    FlexCarousel,
+    FlexImage,
     FlexMessage,
     FlexSeparator,
     FlexText,
     PostbackAction,
+    URIAction,
 )
 
 
@@ -40,6 +43,67 @@ def _ev(event: dict, *keys: str, default: str = "") -> str:
         if v is not None and v != "":
             return str(v)
     return default
+
+
+# ── 廟宇推薦 carousel（尋緣「依願找廟」postback 回覆）────────────────────────
+
+def build_temple_recommendations(temples: list[dict], base_url: str) -> FlexMessage | None:
+    """
+    把廟宇清單組成 Flex carousel（最多 10 張），每張按鈕跳 Web App 廟宇詳情頁。
+    temples = Web App /api/temples 回傳的廟宇 dict 清單（含 slug / name / mainDeity / photos…）。
+    廟少沒關係，1~2 張也好看。沒有任何可用廟宇時回傳 None（交由上層改回文字）。
+    """
+    base = base_url.rstrip("/")
+    bubbles: list = []
+
+    for t in temples[:10]:
+        slug = _ev(t, "slug")
+        if not slug:
+            continue
+        name = _ev(t, "name", default="宮廟")
+        main_deity = _ev(t, "mainDeity", "main_deity")
+        desc = _ev(t, "description")
+        intro = f"主祀：{main_deity}" if main_deity else (desc[:40] if desc else "點開看看這間廟")
+
+        # 圖片：取 photos[0]，相對路徑補上 base_url；無圖則不放 hero（避免破圖）
+        photos = t.get("photos") or t.get("photos_json") or []
+        img_url = None
+        if photos:
+            p = str(photos[0])
+            img_url = p if p.startswith("http") else f"{base}{p if p.startswith('/') else '/' + p}"
+
+        body = FlexBox(
+            layout="vertical",
+            spacing="sm",
+            contents=[
+                FlexText(text=name, weight="bold", size="lg", wrap=True),
+                FlexText(text=intro, size="sm", color="#888888", wrap=True),
+            ],
+        )
+        footer = FlexBox(
+            layout="vertical",
+            contents=[
+                FlexButton(
+                    action=URIAction(label="看詳情", uri=f"{base}/temples/{slug}"),
+                    style="primary",
+                    color="#b3552b",
+                )
+            ],
+        )
+        kwargs = {"body": body, "footer": footer}
+        if img_url:
+            kwargs["hero"] = FlexImage(
+                url=img_url, size="full", aspect_ratio="20:13", aspect_mode="cover"
+            )
+        bubbles.append(FlexBubble(**kwargs))
+
+    if not bubbles:
+        return None
+
+    return FlexMessage(
+        alt_text="為你推薦的宮廟",
+        contents=FlexCarousel(contents=bubbles),
+    )
 
 
 # ── 活動通知（push 時用）──────────────────────────────────────────────────────
