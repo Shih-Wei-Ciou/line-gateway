@@ -7,6 +7,7 @@ TEP 回傳的 event dict 使用 camelCase（startAt、signupEndAt 等），
 """
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 
 from linebot.v3.messaging import (
@@ -20,6 +21,12 @@ from linebot.v3.messaging import (
     FlexText,
     PostbackAction,
     URIAction,
+)
+
+
+# demo 廟卡示意圖（host 在 gateway 自己的 /static，可公開 HTTPS 存取）
+DEMO_CARD_IMAGE = os.getenv(
+    "DEMO_CARD_IMAGE", "https://line-gateway.zeabur.app/static/demo_temple.jpg"
 )
 
 
@@ -65,37 +72,32 @@ def build_temple_recommendations(temples: list[dict], base_url: str) -> FlexMess
         desc = _ev(t, "description")
         intro = f"主祀：{main_deity}" if main_deity else (desc[:40] if desc else "點開看看這間廟")
 
-        # 圖片：取 photos[0]，相對路徑補上 base_url；無圖則不放 hero（避免破圖）
-        photos = t.get("photos") or t.get("photos_json") or []
-        img_url = None
-        if photos:
-            p = str(photos[0])
-            img_url = p if p.startswith("http") else f"{base}{p if p.startswith('/') else '/' + p}"
-
+        # demo 階段：每張卡都用同一張示意圖（host 在 gateway 的 /static）
+        hero = FlexImage(
+            url=DEMO_CARD_IMAGE, size="full", aspect_ratio="4:3", aspect_mode="cover"
+        )
         body = FlexBox(
             layout="vertical",
             spacing="sm",
+            padding_all="lg",
             contents=[
-                FlexText(text=name, weight="bold", size="lg", wrap=True),
-                FlexText(text=intro, size="sm", color="#888888", wrap=True),
+                FlexText(text=name, weight="bold", size="lg", wrap=True, color="#2a2620"),
+                FlexText(text=intro, size="sm", color="#8a7f6c", wrap=True),
             ],
         )
         footer = FlexBox(
             layout="vertical",
+            padding_all="md",
             contents=[
                 FlexButton(
                     action=URIAction(label="看詳情", uri=f"{base}/temples/{slug}"),
                     style="primary",
                     color="#b3552b",
+                    height="sm",
                 )
             ],
         )
-        kwargs = {"body": body, "footer": footer}
-        if img_url:
-            kwargs["hero"] = FlexImage(
-                url=img_url, size="full", aspect_ratio="20:13", aspect_mode="cover"
-            )
-        bubbles.append(FlexBubble(**kwargs))
+        bubbles.append(FlexBubble(hero=hero, body=body, footer=footer))
 
     if not bubbles:
         return None

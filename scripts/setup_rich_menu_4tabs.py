@@ -106,8 +106,9 @@ MENUS = {
         "name": "最新消息",
         "chatBarText": "開啟選單",
         "areas": tab_areas() + [
-            {"bounds": {"x": 650,  "y": 600,  "width": 1200, "height": 360}, "action": uri("/news?type=baibaitong")},
-            {"bounds": {"x": 600,  "y": 1040, "width": 620,  "height": 360}, "action": uri("/news?type=temple")},
+            # /news 頁 Web App 還沒做 → 先導主頁，避免 404（之後做好再改回 /news）
+            {"bounds": {"x": 650,  "y": 600,  "width": 1200, "height": 360}, "action": uri("/")},
+            {"bounds": {"x": 600,  "y": 1040, "width": 620,  "height": 360}, "action": uri("/")},
             {"bounds": {"x": 1280, "y": 1040, "width": 620,  "height": 360}, "action": uri("/calendar")},
         ],
     },
