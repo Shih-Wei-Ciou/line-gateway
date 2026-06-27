@@ -62,7 +62,9 @@ def tab_areas():
 
 
 def uri(path):
-    return {"type": "uri", "uri": f"{BASE_URL}{path}"}
+    # 所有選單連結都帶 ?from=line → 落地時前端自動觸發 LINE 登入（已登入則無感）
+    sep = "&" if "?" in path else "?"
+    return {"type": "uri", "uri": f"{BASE_URL}{path}{sep}from=line"}
 
 
 def postback(data, display):
