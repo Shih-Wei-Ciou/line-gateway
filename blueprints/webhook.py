@@ -28,7 +28,6 @@ from services.messages import (
     send_card,
     send_carousel,
     send_simple_greeting,
-    send_welcome_sequence,
 )
 from services.postback_service import handle_postback
 
@@ -131,11 +130,7 @@ def _handle_follow(event: FollowEvent, configuration: Configuration):
         print(f"[LINE API ERROR] get_profile failed for {line_uid}: {exc}")
 
     handle_follow(line_uid, display_name, picture_url)
-
-    try:
-        send_welcome_sequence(line_uid)
-    except Exception:
-        logger.exception("[webhook] send_welcome_sequence failed for %s", line_uid)
+    # 歡迎訊息改由 LINE 官方帳號後台（manager.line.biz）設定，這裡不再自動發。
 
 
 def _handle_unfollow(event: UnfollowEvent):
