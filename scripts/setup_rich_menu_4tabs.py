@@ -131,7 +131,7 @@ MENUS = {
         "areas": tab_areas() + [
             {"bounds": {"x": 350,  "y": 500,  "width": 1800, "height": 560},
              "action": postback("action=about_image", "關於緣引拜拜通")},
-            {"bounds": {"x": 200,  "y": 1180, "width": 950,  "height": 420}, "action": uri("/about")},
+            {"bounds": {"x": 200,  "y": 1180, "width": 950,  "height": 420}, "action": uri("/")},
             {"bounds": {"x": 1350, "y": 1180, "width": 950,  "height": 420}, "action": uri_raw(GOOGLE_FORM_URL)},
         ],
     },
