@@ -3,6 +3,7 @@ LINE Webhook Blueprint — Stage 2: 使用者識別與資料庫
 POST /webhook
 """
 import os
+import time
 import logging
 
 from flask import Blueprint, request, abort
@@ -135,8 +136,10 @@ def _handle_follow(event: FollowEvent, configuration: Configuration):
     except Exception:
         logger.exception("[webhook] handle_follow failed for %s", line_uid)
 
-    # 歡迎「文字+圖」由 LINE 後台設；這裡只補一張「引導用」探索卡（5 張引導 Flex）
+    # 歡迎「文字+圖」由 LINE 後台設；這裡補一張「引導用」探索卡。
+    # 稍等 1.2 秒讓後台的文字+圖先送達，引導卡再跟在「圖片下面」。
     try:
+        time.sleep(1.2)
         send_carousel(line_uid)
     except Exception:
         logger.exception("[webhook] send_carousel (follow) failed for %s", line_uid)
