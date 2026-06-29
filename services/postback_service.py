@@ -21,7 +21,7 @@ import os
 from urllib.parse import parse_qs
 
 import requests
-from linebot.v3.messaging import TextMessage
+from linebot.v3.messaging import ImageMessage, TextMessage
 
 import services.event_service as ev_svc
 from services.flex_builder import (
@@ -36,6 +36,8 @@ logger = logging.getLogger(__name__)
 WEBAPP_BASE_URL = os.getenv("WEBAPP_BASE_URL", "https://yuanyinbb.zeabur.app").rstrip("/")
 # 合作洽詢聯絡方式（之後接表單/Email 再改這裡）
 COOP_CONTACT = os.getenv("COOP_CONTACT", "")
+# 緣引分頁「關於緣引拜拜通」回覆的品牌介紹圖（host 在 gateway static）
+ABOUT_IMAGE_URL = os.getenv("ABOUT_IMAGE_URL", "https://line-gateway.zeabur.app/static/about.jpg")
 
 
 # ── 主入口 ────────────────────────────────────────────────────────────────────
@@ -66,6 +68,8 @@ def handle_postback(line_uid: str, data: str) -> list:
             return _my_regs(line_uid)
         elif action == "recommend_temples":
             return _recommend_temples()
+        elif action == "about_image":
+            return _about_image()
         elif action == "coop_soon":
             return _coop_soon()
         elif action in ("cancel_register_flow", "keep_registration"):
@@ -189,8 +193,13 @@ def _recommend_temples() -> list:
     return [msg]
 
 
+def _about_image() -> list:
+    """緣引分頁「關於緣引拜拜通」→ 回一張固定品牌介紹圖。"""
+    return [ImageMessage(original_content_url=ABOUT_IMAGE_URL, preview_image_url=ABOUT_IMAGE_URL)]
+
+
 def _coop_soon() -> list:
-    """合作分頁的「合作洽詢」→ 先回固定文字（功能尚未開放）。"""
+    """（舊）合作分頁的「合作洽詢」→ 先回固定文字。新版緣引分頁已改用 about_image + Google 表單。"""
     contact = f"\n聯絡：{COOP_CONTACT}" if COOP_CONTACT else ""
     return [TextMessage(
         text="合作洽詢即將開放 🙏\n歡迎廟方、人才與我們聯繫，我們會盡快回覆。" + contact

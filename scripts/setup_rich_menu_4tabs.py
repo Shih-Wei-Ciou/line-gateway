@@ -31,6 +31,9 @@ except ImportError:
 CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "<填入 Channel access token>")
 BASE_URL = os.environ.get("WEBAPP_BASE_URL", "https://yuanyinbb.zeabur.app")  # ← 務必是正式站
 
+# 緣引分頁右下「合作」→ Google 表單完整網址（務必換成真的表單；未填則為佔位）
+GOOGLE_FORM_URL = os.environ.get("COOP_FORM_URL", "https://forms.gle/REPLACE_ME")
+
 # 四張圖（已由 richman/*.png 放大到 2500x1686 + 壓到 <1MB，轉成 JPEG）
 IMAGES = {
     "find":    "static/richmenu/find.jpg",      # 找廟
@@ -62,9 +65,14 @@ def tab_areas():
 
 
 def uri(path):
-    # 所有選單連結都帶 ?from=line → 落地時前端自動觸發 LINE 登入（已登入則無感）
+    # 所有「站內」選單連結都帶 ?from=line → 落地時前端自動觸發 LINE 登入（已登入則無感）
     sep = "&" if "?" in path else "?"
     return {"type": "uri", "uri": f"{BASE_URL}{path}{sep}from=line"}
+
+
+def uri_raw(full_url):
+    """完整外部網址（例如 Google 表單），不接 BASE_URL、不加 from=line。"""
+    return {"type": "uri", "uri": full_url}
 
 
 def postback(data, display):
@@ -114,15 +122,17 @@ MENUS = {
             {"bounds": {"x": 1280, "y": 1040, "width": 620,  "height": 360}, "action": uri("/calendar")},
         ],
     },
-    # ④ 合作：整張內容區 = 一顆大按鈕（先不接功能）
+    # ④ 緣引（原合作）：中間品牌說明鈕(回介紹圖) + 下方左「緣引/about」右「合作/Google表單」
     "coop": {
         "size": {"width": 2500, "height": 1686},
         "selected": True,
-        "name": "合作",
+        "name": "緣引",
         "chatBarText": "開啟選單",
         "areas": tab_areas() + [
-            {"bounds": {"x": 0, "y": 230, "width": 2500, "height": 1456},
-             "action": postback("action=coop_soon", "合作洽詢")},
+            {"bounds": {"x": 350,  "y": 500,  "width": 1800, "height": 560},
+             "action": postback("action=about_image", "關於緣引拜拜通")},
+            {"bounds": {"x": 200,  "y": 1180, "width": 950,  "height": 420}, "action": uri("/about")},
+            {"bounds": {"x": 1350, "y": 1180, "width": 950,  "height": 420}, "action": uri_raw(GOOGLE_FORM_URL)},
         ],
     },
 }
