@@ -35,34 +35,34 @@ BUTTON_BG = "#1A1612"
 # ── 卡片內容 ────────────────────────────────────────────────────────────────
 CARDS: dict[str, dict] = {
     "welcome": {
-        "title": "探索拜拜通",
-        "subtitle": "開始你的線上參拜",
-        "hint": "往右滑探索四個主題",
-        "button": "開始",
+        "title": "第一次拜拜？別緊張",
+        "subtitle": "我陪你一步步來，往右滑看看能做什麼。",
+        "hint": "往右滑，一張一張帶你看",
+        "button": "從找廟開始",
         "path": "/",
     },
     "temples": {
-        "title": "廟宇地圖",
-        "subtitle": "找一座你想去的廟",
-        "button": "探索",
+        "title": "想拜，但不知道去哪？",
+        "subtitle": "看地圖，找一間離你近、又合你心願的廟。",
+        "button": "幫我找廟",
         "path": "/temples",
     },
     "deities": {
-        "title": "神明速查",
-        "subtitle": "認識每位神明的故事",
-        "button": "探索",
+        "title": "這位神明，管什麼？",
+        "subtitle": "求姻緣、財運、考試…先認識該拜誰。",
+        "button": "認識神明",
         "path": "/deities",
     },
     "guides": {
-        "title": "拜拜指南",
-        "subtitle": "從第一次到熟門熟路",
-        "button": "探索",
+        "title": "香怎麼拿？筊怎麼擲？",
+        "subtitle": "第一次也不怕，步驟一個個教你。",
+        "button": "看怎麼拜",
         "path": "/guides",
     },
     "nearby": {
-        "title": "附近的廟",
-        "subtitle": "用座標找你身邊的香火",
-        "button": "探索",
+        "title": "現在就想走一趟？",
+        "subtitle": "用定位，找你身邊正在點香的廟。",
+        "button": "找附近的廟",
         "path": "/temples/nearby",
     },
 }
@@ -136,7 +136,7 @@ def get_explore_carousel() -> FlexMessage:
     """5 張卡片的 Carousel：總覽 → 廟宇 → 神明 → 指南 → 附近。"""
     bubbles = [_bubble(theme) for theme in CAROUSEL_ORDER]
     return FlexMessage(
-        alt_text="探索拜拜通 - 開始你的線上參拜",
+        alt_text="不知道從哪開始？跟著往右滑，我陪你拜第一次",
         contents=FlexCarousel(contents=bubbles),
     )
 
