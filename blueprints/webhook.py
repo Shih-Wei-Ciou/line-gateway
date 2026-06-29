@@ -129,8 +129,17 @@ def _handle_follow(event: FollowEvent, configuration: Configuration):
     except Exception as exc:
         print(f"[LINE API ERROR] get_profile failed for {line_uid}: {exc}")
 
-    handle_follow(line_uid, display_name, picture_url)
-    # 歡迎訊息改由 LINE 官方帳號後台（manager.line.biz）設定，這裡不再自動發。
+    # 記錄用戶（DB）與「引導探索卡」互不影響：任一失敗都不擋另一個
+    try:
+        handle_follow(line_uid, display_name, picture_url)
+    except Exception:
+        logger.exception("[webhook] handle_follow failed for %s", line_uid)
+
+    # 歡迎「文字+圖」由 LINE 後台設；這裡只補一張「引導用」探索卡（5 張引導 Flex）
+    try:
+        send_carousel(line_uid)
+    except Exception:
+        logger.exception("[webhook] send_carousel (follow) failed for %s", line_uid)
 
 
 def _handle_unfollow(event: UnfollowEvent):
